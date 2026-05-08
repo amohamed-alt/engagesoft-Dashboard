@@ -129,7 +129,14 @@
 </div>
 <script>
 "use strict";
-const DATA_PATHS=["data/dashboard-data.json","data/contacts.json","./data/contacts.json","contacts.json"];
+const DATA_PATHS = [
+      "https://amohamed-alt.github.io/engagesoft-Dashboard/data/contacts.json",
+      "https://amohamed-alt.github.io/engagesoft-Dashboard/data/dashboard-data.json",
+      "data/contacts.json",
+      "./data/contacts.json",
+      "../data/contacts.json",
+      "contacts.json"
+    ];
 const CONTACT_TABLE_LIMIT=250,QUALITY_TABLE_LIMIT=200;
 const OWNER_MAP={
 "30207399":{name:"Naira Nour",initials:"NN",roleGroup:"bdr",team:"BDR Team",email:"naira.nour@engagesoft.me"},
