@@ -175,8 +175,44 @@ function isSameDayUTC(a,b){return a.getUTCFullYear()===b.getUTCFullYear()&&a.get
 function getContactValue(c,k){const p=c.properties||{};return clean(c[k]??p[k])}function getOwnerId(c){return getContactValue(c,"hubspot_owner_id")}function ownerInfo(id){id=clean(id);if(!id)return{id:"",name:"Unassigned",initials:"UA",roleGroup:"unassigned",team:"Unassigned",email:""};return OWNER_MAP[id]||{id,name:`Unmapped Owner ${id}`,initials:"U",roleGroup:"other",team:"Other / Unmapped",email:""}}function teamClass(info){if(info.roleGroup==="bdr")return"team-bdr";if(info.team==="Saudi Arabia")return"team-sa";if(info.team==="Egypt")return"team-egypt";if(info.team==="GCC")return"team-gcc";if(info.roleGroup==="sales")return"team-sales";return"team-other"}function lifecycleLabel(v){v=clean(v);return LIFECYCLE_LABELS[v]||v||"Unknown"}function sourceLabel(c){const s=getContactValue(c,"hs_analytics_source")||getContactValue(c,"lead_source")||getContactValue(c,"original_source");return SOURCE_LABELS[s]||s||"Unknown"}function fullName(c){return clean(`${getContactValue(c,"firstname")} ${getContactValue(c,"lastname")}`)||getContactValue(c,"email")||`Contact ${getContactValue(c,"id")||getContactValue(c,"hs_object_id")}`.trim()}function companyName(c){return getContactValue(c,"company")||"—"}function dealsCount(c){const n=Number(getContactValue(c,"num_associated_deals")||0);return Number.isFinite(n)?n:0}
 async function loadData(force=false){showLoading(force?"Refreshing contacts data…":"Loading contacts data…");for(const path of DATA_PATHS){try{const url=`${path}${path.includes("?")?"&":"?"}v=${force?Date.now():"1"}`;const res=await fetch(url,{cache:"no-store"});if(!res.ok)continue;const data=await res.json();const contacts=extractContacts(data);if(!Array.isArray(contacts)||!contacts.length)continue;state.raw=data;state.contacts=normalizeContacts(contacts);state.filtered=[...state.contacts];state.loadedPath=path;populateFilters();applyFiltersAndRender();const gen=data.generatedAt?new Date(data.generatedAt).toLocaleString("en-GB"):"Unknown";$("sync-status").textContent=`Loaded ${formatNumber(state.contacts.length)} contacts · ${gen}`;$("load-notice").innerHTML=`<strong>Loaded successfully:</strong> ${formatNumber(state.contacts.length)} contacts from <span class="uid">${path}</span>. Last sync: ${gen}.`;return}catch(e){console.warn("Failed path:",path,e)}}$("sync-status").textContent="Could not load contacts";$("load-notice").style.borderLeftColor="var(--red)";$("load-notice").innerHTML=`<strong>Could not load contacts data.</strong><br>Make sure <span class="uid">data/contacts.json</span> exists, GitHub Pages is deployed, or the raw GitHub URL is reachable. If opened locally, upload it to GitHub Pages.`}
 function showLoading(msg){$("sync-status").textContent=msg;$("load-notice").style.borderLeftColor="var(--primary)";$("load-notice").innerHTML=`<span class="loader"></span><strong>${msg}</strong>`}
-function extractContacts(d){if(Array.isArray(d))return d;if(Array.isArray(d.contacts))return d.contacts;if(Array.isArray(d.data?.contacts))return d.data.contacts;if(Array.isArray(d.results))return d.results;return[]}
-function normalizeContacts(arr){return arr.map(c=>{const p=c.properties||{},id=clean(c.id||c.hs_object_id||p.hs_object_id);return{...c,id,hs_object_id:clean(c.hs_object_id||p.hs_object_id||id),firstname:clean(c.firstname||p.firstname),lastname:clean(c.lastname||p.lastname),email:clean(c.email||p.email).toLowerCase(),phone:clean(c.phone||p.phone),company:clean(c.company||p.company),createdate:clean(c.createdate||c.hs_createdate||p.createdate||p.hs_createdate||c.createdAt),hs_createdate:clean(c.hs_createdate||p.hs_createdate||c.createdate||p.createdate||c.createdAt),lastmodifieddate:clean(c.lastmodifieddate||p.lastmodifieddate||c.updatedAt),hubspot_owner_id:clean(c.hubspot_owner_id||p.hubspot_owner_id),lifecyclestage:clean(c.lifecyclestage||p.lifecyclestage),hs_lead_status:clean(c.hs_lead_status||p.hs_lead_status),hs_analytics_source:clean(c.hs_analytics_source||p.hs_analytics_source),lead_source:clean(c.lead_source||p.lead_source),original_source:clean(c.original_source||p.original_source),country:clean(c.country||p.country),num_associated_deals:clean(c.num_associated_deals||p.num_associated_deals||"0"),archived:Boolean(c.archived)}})}
+function extractContacts(d){
+  if(Array.isArray(d)) return d;
+  if(Array.isArray(d.records)) return d.records;
+  if(Array.isArray(d.contacts)) return d.contacts;
+  if(Array.isArray(d.data?.contacts)) return d.data.contacts;
+  if(Array.isArray(d.objects?.contacts)) return d.objects.contacts;
+  if(Array.isArray(d.results)) return d.results;
+  return [];
+}
+function normalizeContacts(arr){
+  return arr.map(c=>{
+    const p={...(c.raw?.properties||{}),...(c.properties||{})};
+    const id=clean(c.id||c.hs_object_id||p.hs_object_id||c.raw?.id);
+    const value=(k)=>clean(c[k]??p[k]??c.raw?.[k]);
+    return {
+      ...c,
+      id,
+      hs_object_id:clean(c.hs_object_id||p.hs_object_id||c.raw?.id||id),
+      firstname:value("firstname"),
+      lastname:value("lastname"),
+      email:value("email").toLowerCase(),
+      phone:value("phone"),
+      company:value("company"),
+      createdate:clean(c.createdate||c.hs_createdate||p.createdate||p.hs_createdate||c.createdAt||c.raw?.createdAt),
+      hs_createdate:clean(c.hs_createdate||p.hs_createdate||c.createdate||p.createdate||c.createdAt||c.raw?.createdAt),
+      lastmodifieddate:clean(c.lastmodifieddate||p.lastmodifieddate||c.updatedAt||c.raw?.updatedAt),
+      hubspot_owner_id:value("hubspot_owner_id"),
+      lifecyclestage:value("lifecyclestage"),
+      hs_lead_status:value("hs_lead_status"),
+      hs_analytics_source:value("hs_analytics_source"),
+      lead_source:value("lead_source"),
+      original_source:value("original_source"),
+      country:value("country"),
+      num_associated_deals:clean(c.num_associated_deals??p.num_associated_deals??"0"),
+      archived:Boolean(c.archived)
+    };
+  });
+}
 function countBy(items,fn){const out={};items.forEach(x=>{const k=normalizeKey(typeof fn==="function"?fn(x):x[fn]);out[k]=(out[k]||0)+1});return out}function countTop(items,fn,limit=10){return Object.entries(countBy(items,fn)).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,limit)}function uniqueValues(vals){return[...new Set(vals.map(normalizeKey))].sort((a,b)=>a==="Unknown"?1:b==="Unknown"?-1:a.localeCompare(b))}
 function populateFilters(){const ownerSelect=$("filter-owner"),life=$("filter-lifecycle"),lead=$("filter-lead-status"),country=$("filter-country");ownerSelect.innerHTML='<option value="">All Owners</option>';life.innerHTML='<option value="">All Stages</option>';lead.innerHTML='<option value="">All Statuses</option>';country.innerHTML='<option value="">All Countries</option>';const ownerCounts=countBy(state.contacts,c=>getOwnerId(c)||"unassigned"),groups={bdr:[],sales:[],other:[],unassigned:[]};Object.keys(ownerCounts).forEach(id=>{const info=ownerInfo(id==="unassigned"?"":id);groups[info.roleGroup]?.push({id,info,count:ownerCounts[id]})});Object.entries({bdr:"BDR Team",sales:"Sales",other:"Other / Unmapped",unassigned:"Unassigned"}).forEach(([g,label])=>{const arr=(groups[g]||[]).sort((a,b)=>b.count-a.count||a.info.name.localeCompare(b.info.name));if(!arr.length)return;const og=document.createElement("optgroup");og.label=label;arr.forEach(({id,info,count})=>{const opt=document.createElement("option");opt.value=id==="unassigned"?"__unassigned__":id;opt.textContent=`${info.name} (${id==="unassigned"?"Unassigned":id}) · ${formatNumber(count)}`;og.appendChild(opt)});ownerSelect.appendChild(og)});uniqueValues(state.contacts.map(c=>getContactValue(c,"lifecyclestage"))).forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=lifecycleLabel(v);life.appendChild(o)});uniqueValues(state.contacts.map(c=>getContactValue(c,"hs_lead_status"))).forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v||"Unknown";lead.appendChild(o)});uniqueValues(state.contacts.map(c=>getContactValue(c,"country"))).forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v||"Unknown";country.appendChild(o)});renderMappingTable()}
 function resetFilters(){["filter-team","filter-owner","filter-lifecycle","filter-lead-status","filter-country","filter-date","filter-search"].forEach(id=>$(id).value="");applyFiltersAndRender()}
