@@ -1,1 +1,66 @@
-
+{
+  "generatedAt": "2026-05-08T23:41:12.053Z",
+  "source": "EngageSoft Full Daily Sync Builder",
+  "files": {
+    "contacts": {
+      "ok": false,
+      "path": "contacts.json",
+      "error": "fetch is not defined",
+      "records": []
+    },
+    "companies": {
+      "ok": false,
+      "path": "companies.json",
+      "error": "fetch is not defined",
+      "records": []
+    },
+    "deals": {
+      "ok": false,
+      "path": "deals.json",
+      "error": "fetch is not defined",
+      "records": []
+    },
+    "leads": {
+      "ok": false,
+      "path": "leads.json",
+      "error": "fetch is not defined",
+      "records": []
+    },
+    "calls": {
+      "ok": false,
+      "path": "calls.json",
+      "error": "fetch is not defined",
+      "records": []
+    },
+    "meetings": {
+      "ok": false,
+      "path": "meetings.json",
+      "error": "fetch is not defined",
+      "records": []
+    }
+  },
+  "totals": {
+    "contacts": 0,
+    "companies": 0,
+    "deals": 0,
+    "leads": 0,
+    "calls": 0,
+    "meetings": 0
+  },
+  "summaries": {
+    "lifecycle": {},
+    "leadStatuses": {},
+    "dealStages": {},
+    "callDispositions": {},
+    "meetingOutcomes": {},
+    "ownerStats": []
+  },
+  "objects": {
+    "contacts": [],
+    "companies": [],
+    "deals": [],
+    "leads": [],
+    "calls": [],
+    "meetings": []
+  }
+}
