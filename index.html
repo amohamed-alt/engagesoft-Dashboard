@@ -1,1032 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EngageSoft — Revenue Intelligence</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-  <style>
-    :root {
-      --bg: #f0f2f8;
-      --card: #ffffff;
-      --sidebar: #0d1526;
-      --sidebar-hover: #162038;
-      --text: #0f1a2e;
-      --muted: #64748b;
-      --line: #e2e8f2;
-      --primary: #1a56e8;
-      --primary-soft: #e8effe;
-      --sky: #0ea5e9;
-      --green: #059669;
-      --green-soft: #d1fae5;
-      --orange: #d97706;
-      --orange-soft: #fef3c7;
-      --red: #dc2626;
-      --red-soft: #fee2e2;
-      --purple: #7c3aed;
-      --purple-soft: #ede9fe;
-      --shadow: 0 4px 24px rgba(15,23,42,0.07);
-      --shadow-lg: 0 12px 40px rgba(15,23,42,0.12);
-      --radius: 14px;
-      --sidebar-w: 260px;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'IBM Plex Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-    }
-
-    /* SIDEBAR */
-    .sidebar {
-      position: fixed;
-      left: 0; top: 0; bottom: 0;
-      width: var(--sidebar-w);
-      background: var(--sidebar);
-      display: flex;
-      flex-direction: column;
-      z-index: 100;
-      overflow-y: auto;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 20px 18px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-    }
-
-    .brand-mark {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #1a56e8, #0ea5e9);
-      display: grid;
-      place-items: center;
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 15px;
-      font-weight: 600;
-      color: #fff;
-      flex-shrink: 0;
-      letter-spacing: -1px;
-    }
-
-    .brand-text h1 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #f1f5f9;
-      line-height: 1.1;
-      letter-spacing: -0.01em;
-    }
-
-    .brand-text span {
-      font-size: 11px;
-      color: #4b6082;
-      font-weight: 500;
-    }
-
-    .nav-section { padding: 14px 10px 0; }
-
-    .nav-label {
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: #3d5270;
-      padding: 0 8px;
-      margin-bottom: 5px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 9px 10px;
-      border-radius: 8px;
-      color: #7e96b8;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 2px;
-      transition: all .14s;
-      border-left: 3px solid transparent;
-    }
-
-    .nav-item .ni { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
-    .nav-item:hover { background: var(--sidebar-hover); color: #c8d8ec; }
-    .nav-item.active { background: rgba(26,86,232,0.14); color: #e2eeff; border-left-color: #38bdf8; }
-
-    .sidebar-footer {
-      margin-top: auto;
-      padding: 12px 14px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-    }
-
-    .sync-badge { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: #3d5270; padding: 6px 8px; }
-    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); flex-shrink: 0; }
-
-    /* MAIN */
-    .main { margin-left: var(--sidebar-w); min-height: 100vh; display: flex; flex-direction: column; }
-
-    /* TOPBAR */
-    .topbar {
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(240,242,248,0.92);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--line);
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 26px;
-      gap: 16px;
-    }
-
-    .topbar-title { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
-    .topbar-sub { font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 1px; }
-    .topbar-actions { display: flex; gap: 8px; align-items: center; }
-
-    .btn {
-      border: 1px solid var(--line);
-      background: var(--card);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 7px 14px;
-      font-weight: 600;
-      font-size: 12.5px;
-      cursor: pointer;
-      font-family: 'IBM Plex Sans', sans-serif;
-      transition: .14s;
-      white-space: nowrap;
-    }
-    .btn:hover { background: #f1f5f9; border-color: #b8c8dc; }
-    .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .btn.primary:hover { background: #1445c4; }
-
-    /* CONTENT */
-    .content { padding: 22px 26px 48px; flex: 1; }
-    .page { display: none; }
-    .page.active { display: block; }
-
-    /* FILTERS */
-    .filters {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 13px 16px;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      box-shadow: var(--shadow);
-      margin-bottom: 18px;
-    }
-
-    .filter { display: flex; flex-direction: column; gap: 4px; min-width: 120px; flex: 1; }
-    .filter label { color: var(--muted); font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; }
-
-    .filter select, .filter input {
-      border: 1px solid var(--line);
-      border-radius: 7px;
-      padding: 7px 10px;
-      background: #f8fafc;
-      color: var(--text);
-      outline: none;
-      font-weight: 500;
-      font-size: 12.5px;
-      font-family: 'IBM Plex Sans', sans-serif;
-      transition: border-color .14s;
-    }
-    .filter select:focus, .filter input:focus { border-color: var(--primary); background: #fff; }
-
-    /* KPIs */
-    .kpis { display: grid; gap: 13px; margin-bottom: 16px; }
-    .kpis.k4 { grid-template-columns: repeat(4, 1fr); }
-    .kpis.k3 { grid-template-columns: repeat(3, 1fr); }
-    .kpis.k5 { grid-template-columns: repeat(5, 1fr); }
-    .kpis.k6 { grid-template-columns: repeat(6, 1fr); }
-    .kpis.k2 { grid-template-columns: repeat(2, 1fr); }
-
-    .kpi {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 16px;
-      box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
-      transition: transform .14s, box-shadow .14s;
-    }
-    .kpi:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
-    .kpi-accent { position: absolute; width: 80px; height: 80px; right: -26px; top: -26px; border-radius: 50%; opacity: .5; }
-    .kpi-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 9px; text-transform: uppercase; letter-spacing: .06em; }
-    .kpi-value { font-size: 26px; font-weight: 700; letter-spacing: -0.03em; font-family: 'IBM Plex Mono', monospace; }
-    .kpi-trend { margin-top: 7px; font-size: 11.5px; font-weight: 600; }
-    .kpi-trend.up { color: var(--green); }
-    .kpi-trend.down { color: var(--red); }
-    .kpi-trend.neutral { color: var(--orange); }
-
-    /* PANELS */
-    .panel-grid { display: grid; gap: 14px; margin-bottom: 16px; }
-    .panel-grid.two { grid-template-columns: 1.3fr .7fr; }
-    .panel-grid.three { grid-template-columns: repeat(3, 1fr); }
-    .panel-grid.equal { grid-template-columns: repeat(2, 1fr); }
-
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 18px;
-      box-shadow: var(--shadow);
-    }
-    .panel.full { grid-column: 1 / -1; }
-
-    .panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; gap: 10px; }
-    .panel-title { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
-    .panel-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
-
-    .badge {
-      border-radius: 5px;
-      padding: 3px 9px;
-      font-size: 11px;
-      font-weight: 600;
-      background: var(--primary-soft);
-      color: var(--primary);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .badge.green { background: var(--green-soft); color: #065f46; }
-    .badge.orange { background: var(--orange-soft); color: #78350f; }
-    .badge.red { background: var(--red-soft); color: #7f1d1d; }
-    .badge.purple { background: var(--purple-soft); color: #4c1d95; }
-
-    /* TABLES */
-    .table-wrap { overflow: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    th {
-      text-align: left;
-      color: var(--muted);
-      font-size: 10.5px;
-      font-weight: 600;
-      padding: 9px 12px;
-      border-bottom: 2px solid var(--line);
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      white-space: nowrap;
-    }
-    td { padding: 11px 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; white-space: nowrap; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f8fbff; }
-
-    .owner-cell { display: flex; align-items: center; gap: 8px; }
-    .avatar {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-      color: #1d4ed8;
-      display: grid;
-      place-items: center;
-      font-size: 10px;
-      font-weight: 700;
-      flex-shrink: 0;
-      font-family: 'IBM Plex Mono', monospace;
-    }
-
-    .uid {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px;
-      color: var(--muted);
-      background: #f1f5f9;
-      border-radius: 4px;
-      padding: 2px 6px;
-    }
-
-    .status {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      border-radius: 4px;
-      padding: 3px 8px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    .status.green { background: var(--green-soft); color: #065f46; }
-    .status.orange { background: var(--orange-soft); color: #78350f; }
-    .status.red { background: var(--red-soft); color: #7f1d1d; }
-    .status.blue { background: var(--primary-soft); color: #1e3a8a; }
-    .status.purple { background: var(--purple-soft); color: #4c1d95; }
-
-    /* MISC */
-    .progress-bar { height: 5px; border-radius: 99px; background: #e2e8f2; overflow: hidden; margin-top: 4px; width: 100px; display:inline-block; vertical-align: middle; }
-    .progress-fill { height: 100%; border-radius: 99px; }
-
-    canvas { max-height: 280px; }
-
-    .team-tag {
-      font-size: 10.5px;
-      font-weight: 600;
-      border-radius: 4px;
-      padding: 2px 7px;
-    }
-    .team-bdr { background: #ede9fe; color: #5b21b6; }
-    .team-sales { background: #d1fae5; color: #065f46; }
-    .team-gcc { background: #fef3c7; color: #78350f; }
-    .team-egypt { background: #dbeafe; color: #1e3a8a; }
-    .team-sa { background: #fce7f3; color: #9d174d; }
-
-    .coverage-pill { border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: 600; display: inline-block; }
-    .cov-high { background: var(--green-soft); color: #065f46; }
-    .cov-mid  { background: var(--orange-soft); color: #78350f; }
-    .cov-low  { background: var(--red-soft); color: #7f1d1d; }
-
-    @media (max-width: 1200px) {
-      .kpis.k4, .kpis.k5, .kpis.k6 { grid-template-columns: repeat(3, 1fr); }
-      .panel-grid.two, .panel-grid.three { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 860px) {
-      :root { --sidebar-w: 0px; }
-      .sidebar { transform: translateX(-260px); }
-      .kpis.k4, .kpis.k5 { grid-template-columns: repeat(2, 1fr); }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EngageSoft — Contacts Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f0f2f8;--card:#fff;--sidebar:#0d1526;--sidebar-hover:#162038;--text:#0f1a2e;--muted:#64748b;--line:#e2e8f2;--primary:#1a56e8;--primary-soft:#e8effe;--green:#059669;--green-soft:#d1fae5;--orange:#d97706;--orange-soft:#fef3c7;--red:#dc2626;--red-soft:#fee2e2;--purple:#7c3aed;--purple-soft:#ede9fe;--shadow:0 4px 24px rgba(15,23,42,.07);--shadow-lg:0 12px 40px rgba(15,23,42,.12);--radius:14px;--sidebar-w:260px}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:"IBM Plex Sans",sans-serif;background:var(--bg);color:var(--text);font-size:14px}.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar);display:flex;flex-direction:column;z-index:100;overflow-y:auto}.brand{display:flex;align-items:center;gap:10px;padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}.brand-mark{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#1a56e8,#0ea5e9);display:grid;place-items:center;font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;color:#fff;letter-spacing:-1px}.brand-text h1{font-size:15px;font-weight:700;color:#f1f5f9;line-height:1.1}.brand-text span{font-size:11px;color:#7e96b8;font-weight:500}.nav-section{padding:14px 10px 0}.nav-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#526988;padding:0 8px;margin-bottom:5px}.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:#9ab0cc;cursor:pointer;font-size:13px;font-weight:500;margin-bottom:2px;transition:.14s;border-left:3px solid transparent;user-select:none}.nav-item .ni{font-size:15px;width:20px;text-align:center}.nav-item:hover{background:var(--sidebar-hover);color:#e2eeff}.nav-item.active{background:rgba(26,86,232,.14);color:#e2eeff;border-left-color:#38bdf8}.sidebar-footer{margin-top:auto;padding:12px 14px;border-top:1px solid rgba(255,255,255,.06)}.sync-badge{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#9ab0cc;padding:6px 8px;line-height:1.4}.sync-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2);flex-shrink:0}.main{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column}.topbar{position:sticky;top:0;z-index:50;background:rgba(240,242,248,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);min-height:60px;display:flex;align-items:center;justify-content:space-between;padding:11px 26px;gap:16px}.topbar-title{font-size:17px;font-weight:700}.topbar-sub{font-size:12px;color:var(--muted);margin-top:1px}.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.btn{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:8px;padding:7px 14px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:"IBM Plex Sans",sans-serif;transition:.14s;white-space:nowrap}.btn:hover{background:#f1f5f9;border-color:#b8c8dc}.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.content{padding:22px 26px 48px;flex:1}.page{display:none}.page.active{display:block}.notice{background:#fff;border:1px solid var(--line);border-left:4px solid var(--primary);border-radius:var(--radius);padding:14px 16px;margin-bottom:18px;box-shadow:var(--shadow);color:var(--muted);line-height:1.55}.notice strong{color:var(--text)}.filters{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:13px 16px;display:flex;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow);margin-bottom:18px}.filter{display:flex;flex-direction:column;gap:4px;min-width:145px;flex:1}.filter.wide{min-width:260px;flex:2}.filter label{color:var(--muted);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.07em}.filter select,.filter input{border:1px solid var(--line);border-radius:7px;padding:7px 10px;background:#f8fafc;color:var(--text);outline:none;font-weight:500;font-size:12.5px;font-family:"IBM Plex Sans",sans-serif;min-height:36px}.kpis{display:grid;gap:13px;margin-bottom:16px}.kpis.k2{grid-template-columns:repeat(2,1fr)}.kpis.k3{grid-template-columns:repeat(3,1fr)}.kpis.k4{grid-template-columns:repeat(4,1fr)}.kpis.k5{grid-template-columns:repeat(5,1fr)}.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:.14s;min-height:116px}.kpi:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}.kpi-accent{position:absolute;width:80px;height:80px;right:-26px;top:-26px;border-radius:50%;opacity:.55}.kpi-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:9px;text-transform:uppercase;letter-spacing:.06em;position:relative;z-index:1}.kpi-value{font-size:26px;font-weight:700;letter-spacing:-.03em;font-family:"IBM Plex Mono",monospace;position:relative;z-index:1;overflow-wrap:anywhere}.kpi-trend{margin-top:7px;font-size:11.5px;font-weight:600;color:var(--muted);line-height:1.35;position:relative;z-index:1}.kpi-trend.up{color:var(--green)}.kpi-trend.down{color:var(--red)}.kpi-trend.neutral{color:var(--orange)}.panel-grid{display:grid;gap:14px;margin-bottom:16px}.panel-grid.two{grid-template-columns:1.35fr .65fr}.panel-grid.equal{grid-template-columns:repeat(2,1fr)}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);min-width:0}.panel-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:10px}.panel-title{font-size:14px;font-weight:700}.panel-sub{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.45}.badge{border-radius:5px;padding:3px 9px;font-size:11px;font-weight:600;background:var(--primary-soft);color:var(--primary);white-space:nowrap;flex-shrink:0}.badge.green{background:var(--green-soft);color:#065f46}.badge.orange{background:var(--orange-soft);color:#78350f}.badge.red{background:var(--red-soft);color:#7f1d1d}.badge.purple{background:var(--purple-soft);color:#4c1d95}.badge.gray{background:#f1f5f9;color:#334155}.table-wrap{overflow:auto;border-radius:10px;border:1px solid #eef2f7}table{width:100%;border-collapse:collapse;background:#fff}th{text-align:left;color:var(--muted);font-size:10.5px;font-weight:600;padding:9px 12px;border-bottom:2px solid var(--line);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;background:#f8fafc;position:sticky;top:0;z-index:1}td{padding:11px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;white-space:nowrap;vertical-align:middle}tr:hover td{background:#f8fbff}.owner-cell{display:flex;align-items:center;gap:8px}.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1d4ed8;display:grid;place-items:center;font-size:10px;font-weight:700;flex-shrink:0;font-family:"IBM Plex Mono",monospace}.uid{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);background:#f1f5f9;border-radius:4px;padding:2px 6px}.status,.team-tag{display:inline-flex;align-items:center;border-radius:4px;padding:3px 8px;font-size:11px;font-weight:600;gap:4px;white-space:nowrap}.status.green,.team-sales{background:var(--green-soft);color:#065f46}.status.orange,.team-gcc{background:var(--orange-soft);color:#78350f}.status.red{background:var(--red-soft);color:#7f1d1d}.status.blue,.team-egypt{background:var(--primary-soft);color:#1e3a8a}.status.purple,.team-bdr{background:var(--purple-soft);color:#4c1d95}.status.gray,.team-other{background:#f1f5f9;color:#334155}.team-sa{background:#fce7f3;color:#9d174d}.progress-bar{height:5px;border-radius:99px;background:#e2e8f2;overflow:hidden;margin-top:4px;width:100px;display:inline-block;vertical-align:middle}.progress-fill{height:100%;border-radius:99px;background:var(--primary)}.empty-state{padding:34px 20px;text-align:center;color:var(--muted);background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;line-height:1.6}.loader{width:16px;height:16px;border:2px solid #dbeafe;border-top-color:#1a56e8;border-radius:50%;display:inline-block;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}canvas{max-height:300px}@media(max-width:1200px){.kpis.k4,.kpis.k5{grid-template-columns:repeat(2,1fr)}.panel-grid.two,.panel-grid.equal{grid-template-columns:1fr}}@media(max-width:860px){:root{--sidebar-w:0}.sidebar{transform:translateX(-260px)}.main{margin-left:0}.kpis.k2,.kpis.k3,.kpis.k4,.kpis.k5{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.content{padding:18px 14px 36px}}
+</style>
 </head>
 <body>
-
 <aside class="sidebar">
-  <div class="brand">
-    <div class="brand-mark">ES</div>
-    <div class="brand-text">
-      <h1>EngageSoft</h1>
-      <span>Revenue Intelligence</span>
-    </div>
-  </div>
-
+  <div class="brand"><div class="brand-mark">ES</div><div class="brand-text"><h1>EngageSoft</h1><span>Contacts Intelligence</span></div></div>
   <nav class="nav-section">
-    <div class="nav-label">Dashboards</div>
-    <div class="nav-item active" data-page="sales"><span class="ni">📊</span> Sales Activities</div>
-    <div class="nav-item" data-page="sdr"><span class="ni">🎯</span> SDR / BDR Activity</div>
-    <div class="nav-item" data-page="followup"><span class="ni">🔔</span> Follow-Up Quality</div>
-    <div class="nav-item" data-page="contacts"><span class="ni">👥</span> Contacts</div>
-    <div class="nav-item" data-page="leads"><span class="ni">🧲</span> Leads</div>
-    <div class="nav-item" data-page="deals"><span class="ni">🏆</span> Deals Won</div>
-    <div class="nav-item" data-page="tam"><span class="ni">🌍</span> TAM Coverage</div>
-    <div class="nav-label" style="margin-top:16px">System</div>
-    <div class="nav-item" data-page="users"><span class="ni">👤</span> Team Members</div>
+    <div class="nav-label">Contacts Data</div>
+    <div class="nav-item active" data-page="overview"><span class="ni">📊</span> Overview</div>
+    <div class="nav-item" data-page="contacts"><span class="ni">👥</span> Contacts Explorer</div>
+    <div class="nav-item" data-page="owners"><span class="ni">👤</span> Owners & Teams</div>
+    <div class="nav-item" data-page="quality"><span class="ni">🧹</span> Data Quality</div>
+    <div class="nav-label" style="margin-top:16px">Next Objects</div>
+    <div class="nav-item" data-page="readiness"><span class="ni">🧩</span> Sync Readiness</div>
   </nav>
-
-  <div class="sidebar-footer">
-    <div class="sync-badge"><span class="sync-dot"></span> Live · Last sync: Today 09:41</div>
-  </div>
+  <div class="sidebar-footer"><div class="sync-badge"><span class="sync-dot"></span><span id="sync-status">Loading contacts data…</span></div></div>
 </aside>
-
 <div class="main">
-  <header class="topbar">
-    <div>
-      <div class="topbar-title" id="page-title">Sales Activities Dashboard</div>
-      <div class="topbar-sub" id="page-sub">Calls, meetings, emails and pipeline overview</div>
-    </div>
-    <div class="topbar-actions">
-      <button class="btn">⬇ Export</button>
-      <button class="btn">↺ Reset Filters</button>
-      <button class="btn primary">⟳ Refresh Data</button>
-    </div>
-  </header>
+<header class="topbar">
+  <div><div class="topbar-title" id="page-title">Contacts Overview</div><div class="topbar-sub" id="page-sub">Live from data/contacts.json, owner IDs mapped to BDR and Sales teams</div></div>
+  <div class="topbar-actions"><button class="btn" id="export-csv-btn">⬇ Export Filtered CSV</button><button class="btn" id="reset-btn">↺ Reset Filters</button><button class="btn primary" id="refresh-btn">⟳ Refresh Data</button></div>
+</header>
+<main class="content">
+  <div id="load-notice" class="notice"><span class="loader"></span><strong>Loading:</strong> trying <span class="uid">data/contacts.json</span>. If opened locally, browser security may block fetch.</div>
 
-  <div class="content">
-
-    <!-- ═══════════════════════════════════ PAGE: SALES ACTIVITIES ═══ -->
-    <div class="page active" id="page-sales">
-      <div class="filters">
-        <div class="filter"><label>Date Range</label>
-          <select><option>This Month</option><option>Today</option><option>This Week</option><option>This Quarter</option></select></div>
-        <div class="filter"><label>Owner</label>
-          <select>
-            <option value="">All Sales Reps</option>
-            <optgroup label="Saudi Arabia">
-              <option>Ahmad Shelbayeh (30953784)</option>
-              <option>Maher Qafisheh (30210123)</option>
-            </optgroup>
-            <optgroup label="GCC">
-              <option>Hoda Kalache (30898185)</option>
-              <option>Nader Soudi (31634077)</option>
-              <option>Sarah Safwat (31634084)</option>
-            </optgroup>
-            <optgroup label="Egypt">
-              <option>Marwa Amin (30210124)</option>
-              <option>Ahmed Eid (30210118)</option>
-              <option>Mai Zayed (31634046)</option>
-              <option>Badr Elkhateeb (31634061)</option>
-            </optgroup>
-          </select></div>
-        <div class="filter"><label>Team</label>
-          <select><option>All Teams</option><option>Egypt</option><option>GCC</option><option>Saudi Arabia</option></select></div>
-        <div class="filter"><label>Pipeline</label>
-          <select><option>All Pipelines</option><option>Sales Pipeline</option></select></div>
-        <div class="filter"><label>Search</label><input placeholder="Company or contact…"></div>
-      </div>
-
-      <div class="kpis k4">
-        <div class="kpi"><div class="kpi-accent" style="background:var(--primary-soft)"></div>
-          <div class="kpi-label">Total Calls</div><div class="kpi-value">1,842</div>
-          <div class="kpi-trend up">↑ 14% vs last month</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--green-soft)"></div>
-          <div class="kpi-label">Connected Calls</div><div class="kpi-value">634</div>
-          <div class="kpi-trend up">↑ 34.4% connect rate</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--purple-soft)"></div>
-          <div class="kpi-label">Meetings Held</div><div class="kpi-value">98</div>
-          <div class="kpi-trend up">↑ 12 vs last month</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--orange-soft)"></div>
-          <div class="kpi-label">Email Open Rate</div><div class="kpi-value">41.2%</div>
-          <div class="kpi-trend up">↑ 3.1 pts</div></div>
-      </div>
-
-      <div class="kpis k4">
-        <div class="kpi"><div class="kpi-label">Reply Rate</div><div class="kpi-value">18.7%</div><div class="kpi-trend up">↑ 2.4 pts</div></div>
-        <div class="kpi"><div class="kpi-label">Accounts Touched</div><div class="kpi-value">384</div><div class="kpi-trend up">↑ 22 this week</div></div>
-        <div class="kpi"><div class="kpi-label">Contacts Created</div><div class="kpi-value">212</div><div class="kpi-trend up">↑ 18% growth</div></div>
-        <div class="kpi"><div class="kpi-label">Companies Created</div><div class="kpi-value">67</div><div class="kpi-trend neutral">→ Flat</div></div>
-      </div>
-
-      <div class="panel-grid two">
-        <div class="panel">
-          <div class="panel-header">
-            <div><div class="panel-title">Activities by Rep</div><div class="panel-sub">Calls, meetings, emails & tasks — Sales team</div></div>
-            <span class="badge">This Month</span>
-          </div>
-          <canvas id="s-owner-chart"></canvas>
-        </div>
-        <div class="panel">
-          <div class="panel-header">
-            <div><div class="panel-title">Activity Mix</div><div class="panel-sub">Distribution by type</div></div>
-            <span class="badge green">Live</span>
-          </div>
-          <canvas id="s-mix-chart"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <div><div class="panel-title">Activities Trend — Last 30 Days</div><div class="panel-sub">Daily volume: Calls, Emails and Meetings</div></div>
-          <span class="badge">30 Days</span>
-        </div>
-        <canvas id="s-trend-chart"></canvas>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════ PAGE: SDR / BDR ═══════════ -->
-    <div class="page" id="page-sdr">
-      <div class="filters">
-        <div class="filter"><label>Date Range</label><select><option>This Month</option><option>This Week</option><option>This Quarter</option></select></div>
-        <div class="filter"><label>BDR Rep</label>
-          <select>
-            <option value="">All BDR Reps</option>
-            <option>Naira Nour (30207399)</option>
-            <option>Shahinaz Shawkat (30207740)</option>
-            <option>Noural Haffar (30207524)</option>
-            <option>Thekra Almutairi (30210128)</option>
-            <option>Sara Al Atrash (32007146)</option>
-            <option>Gaelle Semaan (31281236)</option>
-            <option>Enayat Altork (30207768)</option>
-            <option>Eric Osama (30531777)</option>
-          </select></div>
-      </div>
-
-      <div class="kpis k5">
-        <div class="kpi"><div class="kpi-label">Calls Logged</div><div class="kpi-value">1,284</div><div class="kpi-trend up">↑ 18%</div></div>
-        <div class="kpi"><div class="kpi-label">Connected Calls</div><div class="kpi-value">342</div><div class="kpi-trend up">↑ 26.6% rate</div></div>
-        <div class="kpi"><div class="kpi-label">Prospects Connected</div><div class="kpi-value">218</div><div class="kpi-trend up">↑ 63.7% of conn.</div></div>
-        <div class="kpi"><div class="kpi-label">Meetings Booked</div><div class="kpi-value">76</div><div class="kpi-trend up">↑ 9 this week</div></div>
-        <div class="kpi"><div class="kpi-label">Active Sequences</div><div class="kpi-value">34</div><div class="kpi-trend neutral">4 paused</div></div>
-      </div>
-
-      <div class="kpis k3">
-        <div class="kpi"><div class="kpi-label">Contacts Created</div><div class="kpi-value">212</div><div class="kpi-trend up">↑ 24%</div></div>
-        <div class="kpi"><div class="kpi-label">Accounts Created</div><div class="kpi-value">67</div><div class="kpi-trend neutral">→ Flat</div></div>
-        <div class="kpi"><div class="kpi-label">Booked Meetings</div><div class="kpi-value">76</div><div class="kpi-trend up">↑ 14%</div></div>
-      </div>
-
-      <div class="panel-grid equal">
-        <div class="panel">
-          <div class="panel-header">
-            <div><div class="panel-title">Sequence Metrics by BDR Rep</div><div class="panel-sub">Enrolled, opened, replied</div></div>
-            <span class="badge">This Month</span>
-          </div>
-          <canvas id="sdr-seq-chart"></canvas>
-        </div>
-        <div class="panel">
-          <div class="panel-header">
-            <div><div class="panel-title">Meeting Outcomes</div><div class="panel-sub">Dispositions from booked meetings</div></div>
-            <span class="badge purple">All Reps</span>
-          </div>
-          <canvas id="sdr-outcome-chart"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <div><div class="panel-title">BDR Activity Table</div><div class="panel-sub">Per-rep breakdown — 8 active BDR team members</div></div>
-          <button class="btn">Export CSV</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Rep Name</th><th>HubSpot ID</th><th>Calls</th><th>Connected</th><th>Meetings</th><th>Contacts</th><th>Seq Enrolled</th><th>Open Rate</th><th>Reply Rate</th></tr></thead>
-            <tbody>
-              <tr><td><div class="owner-cell"><span class="avatar">NN</span> Naira Nour</div></td><td><span class="uid">30207399</span></td><td>312</td><td>108</td><td>22</td><td>54</td><td>148</td><td>44%</td><td>21%</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">SS</span> Shahinaz Shawkat</div></td><td><span class="uid">30207740</span></td><td>248</td><td>79</td><td>18</td><td>43</td><td>122</td><td>38%</td><td>17%</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">NH</span> Noural Haffar</div></td><td><span class="uid">30207524</span></td><td>224</td><td>74</td><td>16</td><td>40</td><td>110</td><td>41%</td><td>19%</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">TA</span> Thekra Almutairi</div></td><td><span class="uid">30210128</span></td><td>196</td><td>58</td><td>14</td><td>36</td><td>96</td><td>36%</td><td>15%</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">SA</span> Sara Al Atrash</div></td><td><span class="uid">32007146</span></td><td>164</td><td>52</td><td>11</td><td>30</td><td>88</td><td>39%</td><td>16%</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">GS</span> Gaelle Semaan</div></td><td><span class="uid">31281236</span></td><td>148</td><td>45</td><td>10</td><td>27</td><td>78</td><td>34%</td><td>14%</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">EA</span> Enayat Altork</div></td><td><span class="uid">30207768</span></td><td>132</td><td>38</td><td>9</td><td>24</td><td>70</td><td>32%</td><td>13%</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">EO</span> Eric Osama</div></td><td><span class="uid">30531777</span></td><td>118</td><td>34</td><td>7</td><td>21</td><td>62</td><td>30%</td><td>12%</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════ PAGE: FOLLOW-UP QUALITY ═══ -->
-    <div class="page" id="page-followup">
-      <div class="filters">
-        <div class="filter"><label>Date Range</label><select><option>This Month</option><option>This Week</option><option>This Quarter</option></select></div>
-        <div class="filter"><label>Owner</label>
-          <select><option>All Owners</option><option>Ahmad Shelbayeh</option><option>Maher Qafisheh</option><option>Hoda Kalache</option><option>Nader Soudi</option><option>Sarah Safwat</option><option>Marwa Amin</option><option>Ahmed Eid</option><option>Mai Zayed</option><option>Badr Elkhateeb</option></select></div>
-        <div class="filter"><label>Stage</label><select><option>All Stages</option><option>Demo Completed</option><option>Contract Sent</option><option>Negotiation</option></select></div>
-      </div>
-
-      <div class="kpis k4">
-        <div class="kpi"><div class="kpi-accent" style="background:var(--red-soft)"></div>
-          <div class="kpi-label">Deals w/o Future Activity</div><div class="kpi-value" style="color:var(--red)">23</div>
-          <div class="kpi-trend down">↑ 5 vs last week</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--orange-soft)"></div>
-          <div class="kpi-label">Deals w/ ZERO Calls</div><div class="kpi-value" style="color:var(--orange)">11</div>
-          <div class="kpi-trend down">Needs attention</div></div>
-        <div class="kpi">
-          <div class="kpi-label">Activities on Open Deals</div><div class="kpi-value">847</div>
-          <div class="kpi-trend up">↑ 12% this week</div></div>
-        <div class="kpi">
-          <div class="kpi-label">Avg Time in Stage</div><div class="kpi-value">8.4d</div>
-          <div class="kpi-trend neutral">↑ 0.8d vs target</div></div>
-      </div>
-
-      <div class="panel-grid equal">
-        <div class="panel">
-          <div class="panel-header">
-            <div><div class="panel-title">Activities on Open Deals by Rep</div><div class="panel-sub">Calls, emails and meetings logged</div></div>
-            <span class="badge">Open Deals</span>
-          </div>
-          <canvas id="fu-activity-chart"></canvas>
-        </div>
-        <div class="panel">
-          <div class="panel-header">
-            <div><div class="panel-title">Avg Time in Stage</div><div class="panel-sub">Actual vs. target days per stage</div></div>
-            <span class="badge orange">vs Target</span>
-          </div>
-          <canvas id="fu-stage-chart"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <div><div class="panel-title">Deals Requiring Follow-Up</div><div class="panel-sub">No future activity or zero connected calls on open deals</div></div>
-          <span class="badge red">23 Critical</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Deal</th><th>Company</th><th>Owner</th><th>HubSpot ID</th><th>Stage</th><th>Amount</th><th>Last Activity</th><th>Connected Calls</th><th>Status</th></tr></thead>
-            <tbody>
-              <tr><td>The Financial Academy - 360</td><td>Financial Academy</td><td><div class="owner-cell"><span class="avatar">AK</span> Ahmad Shelbayeh</div></td><td><span class="uid">30953784</span></td><td>Demo Completed</td><td>$18,666</td><td>2 days ago</td><td>4</td><td><span class="status green">Healthy</span></td></tr>
-              <tr><td>Gulf Bank Enterprise</td><td>Gulf Bank</td><td><div class="owner-cell"><span class="avatar">HK</span> Hoda Kalache</div></td><td><span class="uid">30898185</span></td><td>Contract Sent</td><td>$22,000</td><td>9 days ago</td><td>1</td><td><span class="status orange">Follow Up</span></td></tr>
-              <tr><td>Arabtec Construction</td><td>Arabtec</td><td><div class="owner-cell"><span class="avatar">MQ</span> Maher Qafisheh</div></td><td><span class="uid">30210123</span></td><td>Contract Sent</td><td>$6,290</td><td>No activity</td><td>0</td><td><span class="status red">Critical</span></td></tr>
-              <tr><td>Red Sea Film Festival</td><td>RSFF</td><td><div class="owner-cell"><span class="avatar">NS</span> Nader Soudi</div></td><td><span class="uid">31634077</span></td><td>Demo Completed</td><td>—</td><td>Today</td><td>2</td><td><span class="status blue">New</span></td></tr>
-              <tr><td>Jordan Telecom Portal</td><td>Jordan Telecom</td><td><div class="owner-cell"><span class="avatar">BE</span> Badr Elkhateeb</div></td><td><span class="uid">31634061</span></td><td>Demo Scheduled</td><td>$19,200</td><td>14 days ago</td><td>0</td><td><span class="status red">Critical</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════ PAGE: CONTACTS ════════════ -->
-    <div class="page" id="page-contacts">
-      <div class="filters">
-        <div class="filter"><label>Date Range</label><select><option>This Month</option><option>This Quarter</option><option>This Year</option></select></div>
-        <div class="filter"><label>Owner</label><select><option>All Owners</option><option>Ahmad Shelbayeh</option><option>Hoda Kalache</option><option>Marwa Amin</option><option>Sarah Safwat</option></select></div>
-        <div class="filter"><label>Lifecycle Stage</label><select><option>All Stages</option><option>Lead</option><option>MQL</option><option>SQL</option><option>Customer</option></select></div>
-        <div class="filter"><label>Region</label><select><option>All Regions</option><option>GCC</option><option>Levant</option><option>North Africa</option></select></div>
-      </div>
-
-      <div class="kpis k4">
-        <div class="kpi"><div class="kpi-label">Contacts Created</div><div class="kpi-value">212</div><div class="kpi-trend up">↑ 18% this month</div></div>
-        <div class="kpi"><div class="kpi-label">Total Active Contacts</div><div class="kpi-value">1,847</div><div class="kpi-trend neutral">All stages</div></div>
-        <div class="kpi"><div class="kpi-label">Contacts w/ Open Deals</div><div class="kpi-value">134</div><div class="kpi-trend up">↑ 11 added</div></div>
-        <div class="kpi"><div class="kpi-label">Top Source</div><div class="kpi-value">Organic</div><div class="kpi-trend up">38% of total</div></div>
-      </div>
-
-      <div class="panel-grid three">
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">By Lifecycle Stage</div></div><span class="badge">All Contacts</span></div>
-          <canvas id="c-stage-chart"></canvas>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">By Source</div></div><span class="badge purple">This Month</span></div>
-          <canvas id="c-source-chart"></canvas>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">By Region</div></div><span class="badge green">Distribution</span></div>
-          <canvas id="c-region-chart"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <div><div class="panel-title">Contacts Created by Owner</div><div class="panel-sub">Sales team — this month</div></div>
-          <button class="btn">View All</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Owner</th><th>HubSpot ID</th><th>Team</th><th>Contacts Created</th><th>w/ Open Deals</th><th>MQL</th><th>SQL</th><th>% of Total</th></tr></thead>
-            <tbody>
-              <tr><td><div class="owner-cell"><span class="avatar">AS</span> Ahmad Shelbayeh</div></td><td><span class="uid">30953784</span></td><td><span class="team-tag team-sa">Saudi Arabia</span></td><td>54</td><td>18</td><td>22</td><td>14</td><td><div style="display:flex;align-items:center;gap:8px">25%<div class="progress-bar"><div class="progress-fill" style="width:25%;background:var(--primary)"></div></div></div></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">MQ</span> Maher Qafisheh</div></td><td><span class="uid">30210123</span></td><td><span class="team-tag team-sa">Saudi Arabia</span></td><td>46</td><td>15</td><td>18</td><td>11</td><td><div style="display:flex;align-items:center;gap:8px">22%<div class="progress-bar"><div class="progress-fill" style="width:22%;background:#d97706"></div></div></div></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">HK</span> Hoda Kalache</div></td><td><span class="uid">30898185</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>38</td><td>12</td><td>15</td><td>8</td><td><div style="display:flex;align-items:center;gap:8px">18%<div class="progress-bar"><div class="progress-fill" style="width:18%;background:#7c3aed"></div></div></div></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">NS</span> Nader Soudi</div></td><td><span class="uid">31634077</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>34</td><td>10</td><td>12</td><td>7</td><td><div style="display:flex;align-items:center;gap:8px">16%<div class="progress-bar"><div class="progress-fill" style="width:16%;background:#059669"></div></div></div></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">MA</span> Marwa Amin</div></td><td><span class="uid">30210124</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>28</td><td>9</td><td>10</td><td>6</td><td><div style="display:flex;align-items:center;gap:8px">13%<div class="progress-bar"><div class="progress-fill" style="width:13%;background:#0ea5e9"></div></div></div></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════ PAGE: LEADS ══════════════ -->
-    <div class="page" id="page-leads">
-      <div class="filters">
-        <div class="filter"><label>Month</label><select><option>May 2026</option><option>Apr 2026</option><option>Mar 2026</option></select></div>
-        <div class="filter"><label>Owner</label><select><option>All Owners</option><option>Ahmad Shelbayeh</option><option>Hoda Kalache</option><option>Marwa Amin</option><option>Ahmed Eid</option></select></div>
-        <div class="filter"><label>Source</label><select><option>All Sources</option><option>Organic</option><option>Paid</option><option>Referral</option><option>Cold Outbound</option></select></div>
-        <div class="filter"><label>Stage</label><select><option>All Stages</option><option>New</option><option>Contacted</option><option>Qualified</option></select></div>
-      </div>
-
-      <div class="kpis k4">
-        <div class="kpi"><div class="kpi-label">Monthly Leads Created</div><div class="kpi-value">328</div><div class="kpi-trend up">↑ 22% vs last month</div></div>
-        <div class="kpi"><div class="kpi-label">Top Source</div><div class="kpi-value">Organic</div><div class="kpi-trend up">38% of total</div></div>
-        <div class="kpi"><div class="kpi-label">Qualified Leads</div><div class="kpi-value">94</div><div class="kpi-trend up">28.7% qualify rate</div></div>
-        <div class="kpi"><div class="kpi-label">Leads Stuck in Stage</div><div class="kpi-value" style="color:var(--red)">47</div><div class="kpi-trend down">↑ 8 this week</div></div>
-      </div>
-
-      <div class="panel-grid equal">
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">Monthly Leads Created</div><div class="panel-sub">6-month trend</div></div><span class="badge">6 Months</span></div>
-          <canvas id="l-monthly-chart"></canvas>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">Leads by Source</div></div><span class="badge purple">This Month</span></div>
-          <canvas id="l-source-chart"></canvas>
-        </div>
-      </div>
-
-      <div class="panel-grid equal">
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">Leads by Owner</div><div class="panel-sub">Sales reps — this month</div></div></div>
-          <canvas id="l-owner-chart"></canvas>
-        </div>
-        <div class="panel">
-          <div class="panel-header">
-            <div><div class="panel-title">Leads Stuck in Stage</div><div class="panel-sub">No movement in 14+ days</div></div>
-            <span class="badge red">47 Stuck</span>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Stage</th><th>Count</th><th>Avg Days Stuck</th></tr></thead>
-              <tbody>
-                <tr><td>New Lead</td><td>18</td><td><span class="status orange">22 days</span></td></tr>
-                <tr><td>Contacted</td><td>14</td><td><span class="status orange">17 days</span></td></tr>
-                <tr><td>Attempted</td><td>9</td><td><span class="status red">31 days</span></td></tr>
-                <tr><td>Qualified</td><td>6</td><td><span class="status green">14 days</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════ PAGE: DEALS WON ══════════ -->
-    <div class="page" id="page-deals">
-      <div class="filters">
-        <div class="filter"><label>Date Range</label><select><option>This Quarter</option><option>This Month</option><option>This Year</option></select></div>
-        <div class="filter"><label>Owner</label><select><option>All Owners</option><option>Ahmad Shelbayeh</option><option>Maher Qafisheh</option><option>Hoda Kalache</option><option>Sarah Safwat</option><option>Badr Elkhateeb</option></select></div>
-        <div class="filter"><label>Team</label><select><option>All Teams</option><option>Saudi Arabia</option><option>GCC</option><option>Egypt</option></select></div>
-      </div>
-
-      <div class="kpis k4">
-        <div class="kpi"><div class="kpi-accent" style="background:var(--green-soft)"></div>
-          <div class="kpi-label">Deals Won</div><div class="kpi-value" style="color:var(--green)">42</div>
-          <div class="kpi-trend up">↑ 9 vs last quarter</div></div>
-        <div class="kpi"><div class="kpi-accent" style="background:var(--primary-soft)"></div>
-          <div class="kpi-label">Won Revenue</div><div class="kpi-value">$641K</div>
-          <div class="kpi-trend up">↑ 31% QoQ</div></div>
-        <div class="kpi">
-          <div class="kpi-label">Avg Deal Size</div><div class="kpi-value">$15.3K</div>
-          <div class="kpi-trend up">↑ $1.2K vs last Q</div></div>
-        <div class="kpi">
-          <div class="kpi-label">Avg Days to Close</div><div class="kpi-value">34d</div>
-          <div class="kpi-trend down">↑ 4d slower</div></div>
-      </div>
-
-      <div class="kpis k2">
-        <div class="kpi"><div class="kpi-label">Deals Opened (same period)</div><div class="kpi-value">118</div><div class="kpi-trend neutral">35.6% win rate</div></div>
-        <div class="kpi"><div class="kpi-label">Top Owner by Revenue</div><div class="kpi-value">Ahmad S.</div><div class="kpi-trend up">$198K · ID 30953784</div></div>
-      </div>
-
-      <div class="panel-grid equal">
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">Revenue by Owner</div><div class="panel-sub">Deals won amount — Q2 2026</div></div><span class="badge green">Q2 2026</span></div>
-          <canvas id="d-revenue-chart"></canvas>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">Deals Won Trend</div><div class="panel-sub">Monthly count and revenue</div></div><span class="badge">6 Months</span></div>
-          <canvas id="d-trend-chart"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <div><div class="panel-title">Recent Deals Won</div></div>
-          <button class="btn">Export CSV</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Deal</th><th>Company</th><th>Owner</th><th>HubSpot ID</th><th>Team</th><th>Amount</th><th>Close Date</th><th>Days to Close</th></tr></thead>
-            <tbody>
-              <tr><td>Almarai — HR Suite</td><td>Almarai</td><td><div class="owner-cell"><span class="avatar">AS</span> Ahmad Shelbayeh</div></td><td><span class="uid">30953784</span></td><td><span class="team-tag team-sa">Saudi Arabia</span></td><td>$48,000</td><td>May 2, 2026</td><td><span class="status green">28 days</span></td></tr>
-              <tr><td>Dubai Police — ATS</td><td>Dubai Police</td><td><div class="owner-cell"><span class="avatar">HK</span> Hoda Kalache</div></td><td><span class="uid">30898185</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>$36,500</td><td>Apr 28, 2026</td><td><span class="status green">22 days</span></td></tr>
-              <tr><td>Jordan Telecom Portal</td><td>Jordan Telecom</td><td><div class="owner-cell"><span class="avatar">NS</span> Nader Soudi</div></td><td><span class="uid">31634077</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>$19,200</td><td>Apr 22, 2026</td><td><span class="status orange">41 days</span></td></tr>
-              <tr><td>Majid Al Futtaim — ATS</td><td>MAF Group</td><td><div class="owner-cell"><span class="avatar">MQ</span> Maher Qafisheh</div></td><td><span class="uid">30210123</span></td><td><span class="team-tag team-sa">Saudi Arabia</span></td><td>$62,000</td><td>Apr 18, 2026</td><td><span class="status orange">52 days</span></td></tr>
-              <tr><td>Edfa3ly Egypt</td><td>Edfa3ly</td><td><div class="owner-cell"><span class="avatar">BE</span> Badr Elkhateeb</div></td><td><span class="uid">31634061</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>$14,400</td><td>Apr 14, 2026</td><td><span class="status green">18 days</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════ PAGE: TAM COVERAGE ════════ -->
-    <div class="page" id="page-tam">
-      <div class="filters">
-        <div class="filter"><label>Date Range</label><select><option>Last 30 Days</option><option>Last 90 Days</option><option>This Quarter</option></select></div>
-        <div class="filter"><label>Owner</label><select><option>All Owners</option><option>Ahmad Shelbayeh</option><option>Hoda Kalache</option><option>Sarah Safwat</option></select></div>
-        <div class="filter"><label>Team</label><select><option>All Teams</option><option>Saudi Arabia</option><option>GCC</option><option>Egypt</option></select></div>
-      </div>
-
-      <div class="kpis k4">
-        <div class="kpi"><div class="kpi-label">Accounts Assigned</div><div class="kpi-value">1,240</div><div class="kpi-trend neutral">Total TAM</div></div>
-        <div class="kpi"><div class="kpi-label">In Active Sequence</div><div class="kpi-value">384</div><div class="kpi-trend up">31% of TAM</div></div>
-        <div class="kpi"><div class="kpi-label">Contacts Touched 30d</div><div class="kpi-value">612</div><div class="kpi-trend up">↑ 48 this week</div></div>
-        <div class="kpi"><div class="kpi-label">Contacts Touched 90d</div><div class="kpi-value">934</div><div class="kpi-trend up">75% touched</div></div>
-      </div>
-
-      <div class="kpis k2">
-        <div class="kpi"><div class="kpi-label">Accounts Contacted 30d</div><div class="kpi-value">284</div><div class="kpi-trend up">23% of TAM</div></div>
-        <div class="kpi"><div class="kpi-label">Accounts Contacted 90d</div><div class="kpi-value">748</div><div class="kpi-trend up">60% of TAM</div></div>
-      </div>
-
-      <div class="panel-grid equal">
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">Coverage by Region</div><div class="panel-sub">Assigned vs. contacted accounts</div></div><span class="badge">Coverage %</span></div>
-          <canvas id="t-region-chart"></canvas>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><div><div class="panel-title">Coverage Trend</div><div class="panel-sub">Monthly accounts contacted</div></div><span class="badge green">6 Months</span></div>
-          <canvas id="t-trend-chart"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <div><div class="panel-title">Coverage Table by Owner</div><div class="panel-sub">Sales team — Assigned, touched 30/90 days, in-sequence</div></div>
-          <button class="btn">Export</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Owner</th><th>HubSpot ID</th><th>Team</th><th>Assigned</th><th>In Sequence</th><th>Contacted 30d</th><th>Contacted 90d</th><th>Coverage 30d</th><th>Coverage 90d</th></tr></thead>
-            <tbody>
-              <tr><td><div class="owner-cell"><span class="avatar">AS</span> Ahmad Shelbayeh</div></td><td><span class="uid">30953784</span></td><td><span class="team-tag team-sa">Saudi Arabia</span></td><td>280</td><td>94</td><td>72</td><td>188</td><td><span class="coverage-pill cov-mid">25.7%</span></td><td><span class="coverage-pill cov-high">67.1%</span></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">MQ</span> Maher Qafisheh</div></td><td><span class="uid">30210123</span></td><td><span class="team-tag team-sa">Saudi Arabia</span></td><td>240</td><td>78</td><td>58</td><td>154</td><td><span class="coverage-pill cov-mid">24.2%</span></td><td><span class="coverage-pill cov-high">64.2%</span></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">HK</span> Hoda Kalache</div></td><td><span class="uid">30898185</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>220</td><td>66</td><td>44</td><td>122</td><td><span class="coverage-pill cov-low">20.0%</span></td><td><span class="coverage-pill cov-mid">55.5%</span></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">NS</span> Nader Soudi</div></td><td><span class="uid">31634077</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>200</td><td>72</td><td>62</td><td>144</td><td><span class="coverage-pill cov-mid">31.0%</span></td><td><span class="coverage-pill cov-high">72.0%</span></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">SS</span> Sarah Safwat</div></td><td><span class="uid">31634084</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>180</td><td>54</td><td>38</td><td>110</td><td><span class="coverage-pill cov-low">21.1%</span></td><td><span class="coverage-pill cov-mid">61.1%</span></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">MA</span> Marwa Amin</div></td><td><span class="uid">30210124</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>160</td><td>44</td><td>32</td><td>92</td><td><span class="coverage-pill cov-low">20.0%</span></td><td><span class="coverage-pill cov-mid">57.5%</span></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">AE</span> Ahmed Eid</div></td><td><span class="uid">30210118</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>140</td><td>38</td><td>28</td><td>82</td><td><span class="coverage-pill cov-low">20.0%</span></td><td><span class="coverage-pill cov-mid">58.6%</span></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">MZ</span> Mai Zayed</div></td><td><span class="uid">31634046</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>130</td><td>34</td><td>24</td><td>74</td><td><span class="coverage-pill cov-low">18.5%</span></td><td><span class="coverage-pill cov-mid">56.9%</span></td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">BE</span> Badr Elkhateeb</div></td><td><span class="uid">31634061</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>120</td><td>32</td><td>22</td><td>68</td><td><span class="coverage-pill cov-low">18.3%</span></td><td><span class="coverage-pill cov-mid">56.7%</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════ PAGE: TEAM MEMBERS ════════ -->
-    <div class="page" id="page-users">
-      <div class="filters">
-        <div class="filter"><label>Team</label><select><option>All Teams</option><option>BDR</option><option>Sales</option></select></div>
-        <div class="filter"><label>Search</label><input placeholder="Name or ID…"></div>
-      </div>
-
-      <div class="kpis k3">
-        <div class="kpi"><div class="kpi-label">BDR Team Members</div><div class="kpi-value">8</div><div class="kpi-trend up">All active</div></div>
-        <div class="kpi"><div class="kpi-label">Sales Team Members</div><div class="kpi-value">9</div><div class="kpi-trend up">3 teams</div></div>
-        <div class="kpi"><div class="kpi-label">Total Active Reps</div><div class="kpi-value">17</div><div class="kpi-trend neutral">HubSpot Portal 146586424</div></div>
-      </div>
-
-      <!-- BDR Team -->
-      <div class="panel" style="margin-bottom:14px">
-        <div class="panel-header">
-          <div><div class="panel-title">BDR Team</div><div class="panel-sub">8 active members</div></div>
-          <span class="badge purple">BDR</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Full Name</th><th>HubSpot ID</th><th>Team</th><th>Email</th></tr></thead>
-            <tbody>
-              <tr><td><div class="owner-cell"><span class="avatar">NN</span> Naira Nour</div></td><td><span class="uid">30207399</span></td><td><span class="team-tag team-bdr">BDR</span></td><td>naira.nour@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">SS</span> Shahinaz Shawkat</div></td><td><span class="uid">30207740</span></td><td><span class="team-tag team-bdr">BDR</span></td><td>shahinaz.shawkat@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">NH</span> Noural Haffar</div></td><td><span class="uid">30207524</span></td><td><span class="team-tag team-bdr">BDR</span></td><td>noural.haffar@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">TA</span> Thekra Almutairi</div></td><td><span class="uid">30210128</span></td><td><span class="team-tag team-bdr">BDR</span></td><td>thekra.almutairi@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">SA</span> Sara Al Atrash</div></td><td><span class="uid">32007146</span></td><td><span class="team-tag team-bdr">BDR</span></td><td>sara.alatrash@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">GS</span> Gaelle Semaan</div></td><td><span class="uid">31281236</span></td><td><span class="team-tag team-bdr">BDR</span></td><td>gaelle.semaan@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">EA</span> Enayat Altork</div></td><td><span class="uid">30207768</span></td><td><span class="team-tag team-bdr">BDR</span></td><td>enayat.altork@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">EO</span> Eric Osama</div></td><td><span class="uid">30531777</span></td><td><span class="team-tag team-bdr">BDR</span></td><td>eric.osama@engagesoft.me</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Sales Team -->
-      <div class="panel">
-        <div class="panel-header">
-          <div><div class="panel-title">Sales Team</div><div class="panel-sub">9 active members across Egypt · GCC · Saudi Arabia</div></div>
-          <span class="badge green">Sales</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Full Name</th><th>HubSpot ID</th><th>Team</th><th>Email</th></tr></thead>
-            <tbody>
-              <tr><td><div class="owner-cell"><span class="avatar">AS</span> Ahmad Shelbayeh</div></td><td><span class="uid">30953784</span></td><td><span class="team-tag team-sa">Saudi Arabia</span></td><td>ahmad.shelbayeh@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">MQ</span> Maher Qafisheh</div></td><td><span class="uid">30210123</span></td><td><span class="team-tag team-sa">Saudi Arabia</span></td><td>maher.qafisheh@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">HK</span> Hoda Kalache</div></td><td><span class="uid">30898185</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>hoda.kalache@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">NS</span> Nader Soudi</div></td><td><span class="uid">31634077</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>nader.soudi@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">SS</span> Sarah Safwat</div></td><td><span class="uid">31634084</span></td><td><span class="team-tag team-gcc">GCC</span></td><td>sarah.safwat@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">MA</span> Marwa Amin</div></td><td><span class="uid">30210124</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>marwa.amin@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">AE</span> Ahmed Eid</div></td><td><span class="uid">30210118</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>ahmed.eid@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">MZ</span> Mai Zayed</div></td><td><span class="uid">31634046</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>mai.zayed@engagesoft.me</td></tr>
-              <tr><td><div class="owner-cell"><span class="avatar">BE</span> Badr Elkhateeb</div></td><td><span class="uid">31634061</span></td><td><span class="team-tag team-egypt">Egypt</span></td><td>badr.elkhateeb@engagesoft.me</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
+  <div class="filters">
+    <div class="filter"><label>Team</label><select id="filter-team"><option value="">All Teams</option><option value="bdr">BDR Team</option><option value="sales">Sales</option><option value="other">Other / Unmapped</option><option value="unassigned">Unassigned</option></select></div>
+    <div class="filter"><label>Owner</label><select id="filter-owner"><option value="">All Owners</option></select></div>
+    <div class="filter"><label>Lifecycle Stage</label><select id="filter-lifecycle"><option value="">All Stages</option></select></div>
+    <div class="filter"><label>Lead Status</label><select id="filter-lead-status"><option value="">All Statuses</option></select></div>
+    <div class="filter"><label>Country</label><select id="filter-country"><option value="">All Countries</option></select></div>
+    <div class="filter"><label>Created Date</label><select id="filter-date"><option value="">All Time</option><option value="today">Today</option><option value="7d">Last 7 Days</option><option value="30d">Last 30 Days</option><option value="mtd">MTD</option><option value="ytd">YTD</option></select></div>
+    <div class="filter wide"><label>Search</label><input id="filter-search" placeholder="Name, email, company, phone, HubSpot ID…" /></div>
   </div>
+
+  <section class="page active" id="page-overview">
+    <div class="kpis k4">
+      <div class="kpi"><div class="kpi-accent" style="background:var(--primary-soft)"></div><div class="kpi-label">Total Contacts</div><div class="kpi-value" id="kpi-total">—</div><div class="kpi-trend neutral" id="kpi-generated">Waiting for data</div></div>
+      <div class="kpi"><div class="kpi-accent" style="background:var(--purple-soft)"></div><div class="kpi-label">BDR-Owned Contacts</div><div class="kpi-value" id="kpi-bdr">—</div><div class="kpi-trend" id="kpi-bdr-sub">Mapped by BDR Team IDs</div></div>
+      <div class="kpi"><div class="kpi-accent" style="background:var(--green-soft)"></div><div class="kpi-label">Sales-Owned Contacts</div><div class="kpi-value" id="kpi-sales">—</div><div class="kpi-trend" id="kpi-sales-sub">Saudi Arabia · Egypt · GCC</div></div>
+      <div class="kpi"><div class="kpi-accent" style="background:var(--orange-soft)"></div><div class="kpi-label">Filtered Result</div><div class="kpi-value" id="kpi-filtered">—</div><div class="kpi-trend neutral" id="kpi-filtered-sub">Current filters</div></div>
+    </div>
+    <div class="kpis k5">
+      <div class="kpi"><div class="kpi-label">Created MTD</div><div class="kpi-value" id="kpi-mtd">—</div><div class="kpi-trend neutral">Based on createdate</div></div>
+      <div class="kpi"><div class="kpi-label">Created YTD</div><div class="kpi-value" id="kpi-ytd">—</div><div class="kpi-trend neutral">Based on createdate</div></div>
+      <div class="kpi"><div class="kpi-label">Modified Last 7 Days</div><div class="kpi-value" id="kpi-mod7">—</div><div class="kpi-trend neutral">Based on lastmodifieddate</div></div>
+      <div class="kpi"><div class="kpi-label">With Deals</div><div class="kpi-value" id="kpi-with-deals">—</div><div class="kpi-trend neutral">num_associated_deals > 0</div></div>
+      <div class="kpi"><div class="kpi-label">Unassigned</div><div class="kpi-value" id="kpi-unassigned">—</div><div class="kpi-trend down">No hubspot_owner_id</div></div>
+    </div>
+    <div class="panel-grid two">
+      <div class="panel"><div class="panel-header"><div><div class="panel-title">Contacts by Owner</div><div class="panel-sub">Top owners from current filtered contacts</div></div><span class="badge" id="owner-chart-badge">Live</span></div><canvas id="chart-owner"></canvas></div>
+      <div class="panel"><div class="panel-header"><div><div class="panel-title">Team Distribution</div><div class="panel-sub">BDR vs Sales vs unassigned / unmapped</div></div><span class="badge purple">Owner IDs</span></div><canvas id="chart-team"></canvas></div>
+    </div>
+    <div class="panel-grid equal">
+      <div class="panel"><div class="panel-header"><div><div class="panel-title">Lifecycle Stage Mix</div><div class="panel-sub">Raw HubSpot lifecycle values when labels are unknown</div></div><span class="badge green">Contacts</span></div><canvas id="chart-lifecycle"></canvas></div>
+      <div class="panel"><div class="panel-header"><div><div class="panel-title">Source Mix</div><div class="panel-sub">hs_analytics_source → lead_source → original_source</div></div><span class="badge orange">Attribution</span></div><canvas id="chart-source"></canvas></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-contacts">
+    <div class="panel"><div class="panel-header"><div><div class="panel-title">Contacts Explorer</div><div class="panel-sub">Showing first <span id="contacts-limit-label">250</span> rows from current filtered result.</div></div><span class="badge" id="contacts-table-badge">—</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Contact</th><th>Email</th><th>Company</th><th>Owner</th><th>Team</th><th>Lifecycle</th><th>Lead Status</th><th>Country</th><th>Deals</th><th>Created</th><th>Modified</th><th>ID</th></tr></thead><tbody id="contacts-table-body"><tr><td colspan="12">Loading…</td></tr></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-owners">
+    <div class="kpis k4">
+      <div class="kpi"><div class="kpi-label">Mapped BDR Members</div><div class="kpi-value">8</div><div class="kpi-trend neutral">Fixed from team mapping</div></div>
+      <div class="kpi"><div class="kpi-label">Mapped Sales Members</div><div class="kpi-value">9</div><div class="kpi-trend neutral">Saudi Arabia · Egypt · GCC</div></div>
+      <div class="kpi"><div class="kpi-label">Active Owners in Data</div><div class="kpi-value" id="kpi-active-owners">—</div><div class="kpi-trend neutral">Including unmapped IDs</div></div>
+      <div class="kpi"><div class="kpi-label">Unmapped Owner IDs</div><div class="kpi-value" id="kpi-unmapped-owners">—</div><div class="kpi-trend down">Needs owners sync or mapping</div></div>
+    </div>
+    <div class="panel"><div class="panel-header"><div><div class="panel-title">Owner Breakdown</div><div class="panel-sub">Counts computed from hubspot_owner_id</div></div><span class="badge green">Live Contacts</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Owner</th><th>HubSpot ID</th><th>Role Group</th><th>Team</th><th>Contacts</th><th>With Deals</th><th>Created MTD</th><th>Created YTD</th><th>Missing Email</th><th>Share</th></tr></thead><tbody id="owners-table-body"><tr><td colspan="10">Loading…</td></tr></tbody></table></div>
+    </div>
+    <div class="panel" style="margin-top:14px"><div class="panel-header"><div><div class="panel-title">Fixed Team Mapping Used by This HTML</div><div class="panel-sub">BDR = BDR Team. Sales = Saudi Arabia, Egypt, GCC.</div></div><span class="badge gray">Config</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>ID</th><th>Role</th><th>Team</th></tr></thead><tbody id="mapping-table-body"></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-quality">
+    <div class="kpis k4">
+      <div class="kpi"><div class="kpi-accent" style="background:var(--red-soft)"></div><div class="kpi-label">Missing Email</div><div class="kpi-value" id="kpi-missing-email">—</div><div class="kpi-trend down">Can affect outreach</div></div>
+      <div class="kpi"><div class="kpi-accent" style="background:var(--orange-soft)"></div><div class="kpi-label">Missing Company</div><div class="kpi-value" id="kpi-missing-company">—</div><div class="kpi-trend neutral">Needs company association later</div></div>
+      <div class="kpi"><div class="kpi-accent" style="background:var(--orange-soft)"></div><div class="kpi-label">Missing Country</div><div class="kpi-value" id="kpi-missing-country">—</div><div class="kpi-trend neutral">Region quality</div></div>
+      <div class="kpi"><div class="kpi-accent" style="background:var(--purple-soft)"></div><div class="kpi-label">Duplicate Emails</div><div class="kpi-value" id="kpi-dup-email">—</div><div class="kpi-trend neutral">Same email on 2+ contacts</div></div>
+    </div>
+    <div class="panel-grid equal">
+      <div class="panel"><div class="panel-header"><div><div class="panel-title">Data Quality Summary</div><div class="panel-sub">Computed from loaded contacts file only</div></div><span class="badge orange">Contacts</span></div><canvas id="chart-quality"></canvas></div>
+      <div class="panel"><div class="panel-header"><div><div class="panel-title">Top Countries</div><div class="panel-sub">Raw country values preserved</div></div><span class="badge green">Country</span></div><canvas id="chart-country"></canvas></div>
+    </div>
+    <div class="panel"><div class="panel-header"><div><div class="panel-title">Records Needing Cleanup</div><div class="panel-sub">First 200 contacts missing email, owner, company, or country</div></div><span class="badge red" id="quality-table-badge">—</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Contact</th><th>Email</th><th>Owner</th><th>Company</th><th>Country</th><th>Issue</th><th>ID</th></tr></thead><tbody id="quality-table-body"><tr><td colspan="7">Loading…</td></tr></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="page" id="page-readiness">
+    <div class="notice"><strong>Current safe status:</strong> this HTML reads contacts now and is ready to consume the full dashboard file later. Sales Activities, Deals Won, Leads, TAM Coverage, and Follow-Up Quality should not show final numbers until the matching objects and associations exist.</div>
+    <div class="kpis k5">
+      <div class="kpi"><div class="kpi-label">Contacts</div><div class="kpi-value" id="ready-contacts">—</div><div class="kpi-trend up">Loaded</div></div>
+      <div class="kpi"><div class="kpi-label">Deals</div><div class="kpi-value" id="ready-deals">—</div><div class="kpi-trend neutral">Needs data/deals.json</div></div>
+      <div class="kpi"><div class="kpi-label">Calls</div><div class="kpi-value" id="ready-calls">—</div><div class="kpi-trend neutral">Needs data/calls.json</div></div>
+      <div class="kpi"><div class="kpi-label">Meetings</div><div class="kpi-value" id="ready-meetings">—</div><div class="kpi-trend neutral">Needs data/meetings.json</div></div>
+      <div class="kpi"><div class="kpi-label">Leads</div><div class="kpi-value" id="ready-leads">—</div><div class="kpi-trend neutral">Needs data/leads.json</div></div>
+    </div>
+    <div class="panel"><div class="panel-header"><div><div class="panel-title">What This HTML Can Trust Right Now</div><div class="panel-sub">No fake calls, meetings, deals, or lead numbers are generated from contacts-only data</div></div><span class="badge gray">Important</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Report Area</th><th>Status</th><th>Reason</th><th>Next Required File</th></tr></thead><tbody>
+        <tr><td>Contacts, Owners, Lifecycle, Country, Source</td><td><span class="status green">Ready</span></td><td>Available directly inside contacts.json</td><td><span class="uid">data/contacts.json</span></td></tr>
+        <tr><td>Contacts with Deals Count</td><td><span class="status orange">Partial</span></td><td>num_associated_deals exists, but deal details are not loaded</td><td><span class="uid">data/deals.json</span> + associations</td></tr>
+        <tr><td>Sales Activities</td><td><span class="status red">Not Ready</span></td><td>Calls/meetings/emails are not inside contacts</td><td><span class="uid">data/calls.json</span>, <span class="uid">data/meetings.json</span></td></tr>
+        <tr><td>Follow-Up Quality</td><td><span class="status red">Not Ready</span></td><td>Needs open deals, future activity, and associations</td><td><span class="uid">data/deals.json</span> + activities</td></tr>
+        <tr><td>Leads Dashboard</td><td><span class="status red">Not Ready</span></td><td>Lead object is separate</td><td><span class="uid">data/leads.json</span></td></tr>
+        <tr><td>TAM Coverage</td><td><span class="status red">Not Ready</span></td><td>Needs companies/accounts and activity touch data</td><td><span class="uid">data/companies.json</span> + activities</td></tr>
+      </tbody></table></div>
+    </div>
+  </section>
+</main>
 </div>
-
 <script>
-// ── NAVIGATION ───────────────────────────────────────────────
-const META = {
-  sales:   { title: 'Sales Activities Dashboard',    sub: 'Calls, meetings, emails and pipeline overview' },
-  sdr:     { title: 'SDR / BDR Activity Dashboard',  sub: '8 active BDR reps — calls, sequences and meeting metrics' },
-  followup:{ title: 'Follow-Up Quality Dashboard',   sub: 'Deal health, activity gaps and stage timing' },
-  contacts:{ title: 'Contacts Dashboard',            sub: 'Lifecycle stages, sources, regions and owner breakdown' },
-  leads:   { title: 'Leads Dashboard',               sub: 'Monthly leads, sources, stages and stuck analysis' },
-  deals:   { title: 'Deals Won Dashboard',           sub: 'Revenue, deal count, owners and close time' },
-  tam:     { title: 'TAM Coverage Dashboard',        sub: 'Account coverage, sequence enrollment and 30/90-day touch rates' },
-  users:   { title: 'Team Members',                  sub: 'BDR (8 reps) and Sales (9 reps) — HubSpot Portal 146586424' }
+"use strict";
+const DATA_PATHS=["data/dashboard-data.json","data/contacts.json","./data/contacts.json","contacts.json"];
+const CONTACT_TABLE_LIMIT=250,QUALITY_TABLE_LIMIT=200;
+const OWNER_MAP={
+"30207399":{name:"Naira Nour",initials:"NN",roleGroup:"bdr",team:"BDR Team",email:"naira.nour@engagesoft.me"},
+"30207740":{name:"Shahinaz Shawkat",initials:"SS",roleGroup:"bdr",team:"BDR Team",email:"shahinaz.shawkat@engagesoft.me"},
+"30207524":{name:"Noural Haffar",initials:"NH",roleGroup:"bdr",team:"BDR Team",email:"noural.haffar@engagesoft.me"},
+"30210128":{name:"Thekra Almutairi",initials:"TA",roleGroup:"bdr",team:"BDR Team",email:"thekra.almutairi@engagesoft.me"},
+"32007146":{name:"Sara Al Atrash",initials:"SA",roleGroup:"bdr",team:"BDR Team",email:"sara.alatrash@engagesoft.me"},
+"31281236":{name:"Gaelle Semaan",initials:"GS",roleGroup:"bdr",team:"BDR Team",email:"gaelle.semaan@engagesoft.me"},
+"30207768":{name:"Enayat Altork",initials:"EA",roleGroup:"bdr",team:"BDR Team",email:"enayat.altork@engagesoft.me"},
+"30531777":{name:"Eric Osama",initials:"EO",roleGroup:"bdr",team:"BDR Team",email:"eric.osama@engagesoft.me"},
+"30953784":{name:"Ahmad Shelbayeh",initials:"AS",roleGroup:"sales",team:"Saudi Arabia",email:"ahmad.shelbayeh@engagesoft.me"},
+"30210123":{name:"Maher Qafisheh",initials:"MQ",roleGroup:"sales",team:"Saudi Arabia",email:"maher.qafisheh@engagesoft.me"},
+"30898185":{name:"Hoda Kalache",initials:"HK",roleGroup:"sales",team:"GCC",email:"hoda.kalache@engagesoft.me"},
+"31634077":{name:"Nader Soudi",initials:"NS",roleGroup:"sales",team:"GCC",email:"nader.soudi@engagesoft.me"},
+"31634084":{name:"Sarah Safwat",initials:"SS",roleGroup:"sales",team:"GCC",email:"sarah.safwat@engagesoft.me"},
+"30210124":{name:"Marwa Amin",initials:"MA",roleGroup:"sales",team:"Egypt",email:"marwa.amin@engagesoft.me"},
+"30210118":{name:"Ahmed Eid",initials:"AE",roleGroup:"sales",team:"Egypt",email:"ahmed.eid@engagesoft.me"},
+"31634046":{name:"Mai Zayed",initials:"MZ",roleGroup:"sales",team:"Egypt",email:"mai.zayed@engagesoft.me"},
+"31634061":{name:"Badr Elkhateeb",initials:"BE",roleGroup:"sales",team:"Egypt",email:"badr.elkhateeb@engagesoft.me"}
 };
-
-let inited = {};
-
-document.querySelectorAll('.nav-item[data-page]').forEach(el => {
-  el.addEventListener('click', () => {
-    const p = el.dataset.page;
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    el.classList.add('active');
-    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
-    document.getElementById('page-' + p).classList.add('active');
-    document.getElementById('page-title').textContent = META[p].title;
-    document.getElementById('page-sub').textContent = META[p].sub;
-    if (!inited[p]) { buildCharts(p); inited[p] = true; }
-  });
-});
-
-// ── CHART SETUP ──────────────────────────────────────────────
-Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
-Chart.defaults.font.size = 11;
-Chart.defaults.color = '#64748b';
-Chart.defaults.plugins.legend.labels.boxWidth = 9;
-Chart.defaults.plugins.legend.labels.padding = 12;
-
-const C = ['#1a56e8','#0ea5e9','#7c3aed','#059669','#d97706','#dc2626','#f472b6','#0d9488'];
-
-function bar(id, labels, datasets, stacked) {
-  const el = document.getElementById(id); if (!el) return;
-  new Chart(el, { type:'bar', data:{labels, datasets},
-    options:{ responsive:true, plugins:{legend:{position:'bottom'}},
-      scales:{ x:{stacked:!!stacked, grid:{display:false}}, y:{stacked:!!stacked, grid:{color:'#f1f5f9'}, beginAtZero:true} } } });
-}
-
-function line(id, labels, datasets) {
-  const el = document.getElementById(id); if (!el) return;
-  new Chart(el, { type:'line', data:{labels, datasets},
-    options:{ responsive:true, plugins:{legend:{position:'bottom'}},
-      scales:{ x:{grid:{display:false}}, y:{grid:{color:'#f1f5f9'}, beginAtZero:true} } } });
-}
-
-function donut(id, labels, data, colors) {
-  const el = document.getElementById(id); if (!el) return;
-  new Chart(el, { type:'doughnut', data:{labels, datasets:[{data, backgroundColor:colors||C, borderWidth:0}]},
-    options:{ responsive:true, plugins:{legend:{position:'bottom'}}, cutout:'65%' } });
-}
-
-// Real rep names for charts
-const BDR_NAMES   = ['N. Nour','S. Shawkat','N. Haffar','T. Almutairi','S. Al Atrash','G. Semaan','E. Altork','E. Osama'];
-const SALES_NAMES = ['A. Shelbayeh','M. Qafisheh','H. Kalache','N. Soudi','S. Safwat','M. Amin','A. Eid','M. Zayed','B. Elkhateeb'];
-
-function buildCharts(p) {
-  if (p === 'sales') {
-    bar('s-owner-chart', SALES_NAMES,
-      [{ label:'Calls',    data:[88,76,64,58,52,42,38,34,30], backgroundColor:'#1a56e8' },
-       { label:'Meetings', data:[22,18,16,14,12,10,8,7,6],   backgroundColor:'#0ea5e9' },
-       { label:'Emails',   data:[112,98,86,78,70,58,52,46,40], backgroundColor:'#7c3aed' },
-       { label:'Tasks',    data:[44,38,32,28,24,20,17,14,12], backgroundColor:'#d97706' }], true);
-    donut('s-mix-chart',['Calls','Meetings','Emails','Tasks'],[342,76,618,248],['#1a56e8','#0ea5e9','#7c3aed','#d97706']);
-    line('s-trend-chart',['Apr 8','Apr 12','Apr 16','Apr 20','Apr 24','Apr 28','May 2','May 6'],
-      [{ label:'Calls',    data:[82,90,76,108,94,112,98,124], borderColor:'#1a56e8', backgroundColor:'rgba(26,86,232,.08)', fill:true, tension:.35 },
-       { label:'Emails',   data:[140,128,155,162,148,174,158,180], borderColor:'#7c3aed', backgroundColor:'rgba(124,58,237,.06)', fill:true, tension:.35 },
-       { label:'Meetings', data:[14,18,12,22,16,24,20,26], borderColor:'#059669', backgroundColor:'rgba(5,150,105,.08)', fill:true, tension:.35 }]);
-  }
-
-  if (p === 'sdr') {
-    bar('sdr-seq-chart', BDR_NAMES,
-      [{ label:'Enrolled', data:[148,122,110,96,88,78,70,62], backgroundColor:'#1a56e8' },
-       { label:'Opened',   data:[65,46,45,35,34,26,22,19],    backgroundColor:'#0ea5e9' },
-       { label:'Replied',  data:[31,21,21,15,14,11,9,8],      backgroundColor:'#059669' }]);
-    donut('sdr-outcome-chart',['Completed','No Show','Rescheduled','Cancelled','Follow-up'],[42,12,8,6,8],['#059669','#dc2626','#d97706','#94a3b8','#1a56e8']);
-  }
-
-  if (p === 'followup') {
-    bar('fu-activity-chart', SALES_NAMES,
-      [{ label:'Calls',    data:[68,54,44,40,36,28,24,20,16], backgroundColor:'#1a56e8' },
-       { label:'Emails',   data:[94,82,68,58,52,44,38,32,26], backgroundColor:'#7c3aed' },
-       { label:'Meetings', data:[18,14,12,10,9,7,6,5,4],      backgroundColor:'#059669' }], true);
-    bar('fu-stage-chart',['New Deal','Demo Sched.','Demo Done','Contract','Negotiation'],
-      [{ label:'Actual (days)', data:[3,7,12,18,24], backgroundColor:'#1a56e8' },
-       { label:'Target (days)', data:[2,5,8,12,18],  backgroundColor:'#e2e8f2' }]);
-  }
-
-  if (p === 'contacts') {
-    donut('c-stage-chart',['Lead','MQL','SQL','Opportunity','Customer'],[680,420,310,214,223],['#64748b','#d97706','#0ea5e9','#7c3aed','#059669']);
-    donut('c-source-chart',['Organic','Paid','Referral','Cold Outbound','Event'],[38,22,18,14,8],['#1a56e8','#0ea5e9','#059669','#7c3aed','#d97706']);
-    donut('c-region-chart',['GCC','Levant','North Africa','Other'],[54,22,16,8],['#1a56e8','#0ea5e9','#7c3aed','#d97706']);
-  }
-
-  if (p === 'leads') {
-    bar('l-monthly-chart',['Dec','Jan','Feb','Mar','Apr','May'],
-      [{ label:'Leads Created', data:[198,224,186,248,268,328], backgroundColor:'#1a56e8', borderRadius:5 }]);
-    donut('l-source-chart',['Organic','Paid','Referral','Outbound','Event'],[38,24,16,14,8],['#1a56e8','#0ea5e9','#059669','#7c3aed','#d97706']);
-    bar('l-owner-chart', SALES_NAMES,
-      [{ label:'Leads Created', data:[84,68,52,44,38,32,28,24,18], backgroundColor:C, borderRadius:5 }]);
-  }
-
-  if (p === 'deals') {
-    bar('d-revenue-chart',['A. Shelbayeh','M. Qafisheh','H. Kalache','N. Soudi','S. Safwat','B. Elkhateeb'],
-      [{ label:'Won Revenue ($K)', data:[198,142,118,96,87,72], backgroundColor:['#059669','#1a56e8','#0ea5e9','#7c3aed','#d97706','#dc2626'], borderRadius:5 }]);
-    line('d-trend-chart',['Dec','Jan','Feb','Mar','Apr','May'],
-      [{ label:'Deals Won', data:[6,8,11,9,14,42], borderColor:'#059669', backgroundColor:'rgba(5,150,105,.1)', fill:true, tension:.35 },
-       { label:'Revenue ($K)', data:[82,108,148,122,194,641], borderColor:'#1a56e8', backgroundColor:'rgba(26,86,232,.06)', fill:true, tension:.35 }]);
-  }
-
-  if (p === 'tam') {
-    bar('t-region-chart',['GCC','Levant','North Africa','Other'],
-      [{ label:'Assigned',       data:[680,324,186,50],  backgroundColor:'#e2e8f2', borderRadius:4 },
-       { label:'Contacted 90d',  data:[412,198,112,26],  backgroundColor:'#1a56e8', borderRadius:4 },
-       { label:'Contacted 30d',  data:[168,72,36,8],     backgroundColor:'#0ea5e9', borderRadius:4 }]);
-    line('t-trend-chart',['Dec','Jan','Feb','Mar','Apr','May'],
-      [{ label:'Accounts 30d', data:[184,202,218,238,264,284], borderColor:'#1a56e8', backgroundColor:'rgba(26,86,232,.1)', fill:true, tension:.35 },
-       { label:'Accounts 90d', data:[540,580,622,668,714,748], borderColor:'#059669', backgroundColor:'rgba(5,150,105,.06)', fill:true, tension:.35 }]);
-  }
-}
-
-// Init first page
-inited['sales'] = true;
-buildCharts('sales');
+const LIFECYCLE_LABELS={subscriber:"Subscriber",lead:"Lead",marketingqualifiedlead:"MQL",salesqualifiedlead:"SQL",opportunity:"Opportunity",customer:"Customer",evangelist:"Evangelist",other:"Other","3517652159":"Custom Stage 3517652159"};
+const SOURCE_LABELS={OFFLINE:"Offline",DIRECT_TRAFFIC:"Direct Traffic",ORGANIC_SEARCH:"Organic Search",PAID_SEARCH:"Paid Search",EMAIL_MARKETING:"Email Marketing",SOCIAL_MEDIA:"Social Media",REFERRALS:"Referrals",OTHER_CAMPAIGNS:"Other Campaigns"};
+const state={raw:null,contacts:[],filtered:[],charts:{},currentPage:"overview",loadedPath:null};
+const $=id=>document.getElementById(id);
+const META={overview:{title:"Contacts Overview",sub:"Live from data/contacts.json, owner IDs mapped to BDR and Sales teams"},contacts:{title:"Contacts Explorer",sub:"Search, filter and audit synced HubSpot contacts"},owners:{title:"Owners & Teams",sub:"BDR Team and Sales mapping by HubSpot owner ID"},quality:{title:"Data Quality",sub:"Missing owner, email, company, country and duplicate email checks"},readiness:{title:"Sync Readiness",sub:"What can be trusted from contacts-only data, and what needs the next objects"}};
+const COLORS=["#1a56e8","#0ea5e9","#7c3aed","#059669","#d97706","#dc2626","#f472b6","#0d9488","#64748b","#14b8a6","#8b5cf6","#f59e0b"];
+Chart.defaults.font.family="'IBM Plex Sans', sans-serif";Chart.defaults.font.size=11;Chart.defaults.color="#64748b";Chart.defaults.plugins.legend.labels.boxWidth=9;Chart.defaults.plugins.legend.labels.padding=12;
+document.querySelectorAll(".nav-item[data-page]").forEach(el=>el.addEventListener("click",()=>switchPage(el.dataset.page)));
+$("reset-btn").addEventListener("click",resetFilters);$("refresh-btn").addEventListener("click",()=>loadData(true));$("export-csv-btn").addEventListener("click",exportFilteredCsv);
+["filter-team","filter-owner","filter-lifecycle","filter-lead-status","filter-country","filter-date","filter-search"].forEach(id=>{$(id).addEventListener("input",applyFiltersAndRender);$(id).addEventListener("change",applyFiltersAndRender)});
+function switchPage(page){state.currentPage=page;document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add("active");document.querySelectorAll(".page").forEach(pg=>pg.classList.remove("active"));$(`page-${page}`)?.classList.add("active");$("page-title").textContent=META[page].title;$("page-sub").textContent=META[page].sub;renderAll()}
+function formatNumber(v){return new Intl.NumberFormat("en-US").format(Number(v||0))}function formatPercent(n,d){return d?`${((n/d)*100).toFixed(1)}%`:"0%"}function clean(v){return v===null||v===undefined?"":String(v).trim()}function normalizeKey(v){return clean(v)||"Unknown"}function safeDate(v){v=clean(v);if(!v)return null;const d=new Date(v);return Number.isNaN(d.getTime())?null:d}function dateLabel(v){const d=safeDate(v);return d?d.toLocaleDateString("en-GB",{year:"numeric",month:"short",day:"2-digit"}):"—"}
+function isSameDayUTC(a,b){return a.getUTCFullYear()===b.getUTCFullYear()&&a.getUTCMonth()===b.getUTCMonth()&&a.getUTCDate()===b.getUTCDate()}function inMTD(d,now=new Date()){return !!d&&d.getUTCFullYear()===now.getUTCFullYear()&&d.getUTCMonth()===now.getUTCMonth()&&d.getTime()<=now.getTime()}function inYTD(d,now=new Date()){return !!d&&d.getUTCFullYear()===now.getUTCFullYear()&&d.getTime()<=now.getTime()}function inLastDays(d,days,now=new Date()){if(!d)return false;const start=new Date(now.getTime()-days*86400000);return d>=start&&d<=now}
+function getContactValue(c,k){const p=c.properties||{};return clean(c[k]??p[k])}function getOwnerId(c){return getContactValue(c,"hubspot_owner_id")}function ownerInfo(id){id=clean(id);if(!id)return{id:"",name:"Unassigned",initials:"UA",roleGroup:"unassigned",team:"Unassigned",email:""};return OWNER_MAP[id]||{id,name:`Unmapped Owner ${id}`,initials:"U",roleGroup:"other",team:"Other / Unmapped",email:""}}function teamClass(info){if(info.roleGroup==="bdr")return"team-bdr";if(info.team==="Saudi Arabia")return"team-sa";if(info.team==="Egypt")return"team-egypt";if(info.team==="GCC")return"team-gcc";if(info.roleGroup==="sales")return"team-sales";return"team-other"}function lifecycleLabel(v){v=clean(v);return LIFECYCLE_LABELS[v]||v||"Unknown"}function sourceLabel(c){const s=getContactValue(c,"hs_analytics_source")||getContactValue(c,"lead_source")||getContactValue(c,"original_source");return SOURCE_LABELS[s]||s||"Unknown"}function fullName(c){return clean(`${getContactValue(c,"firstname")} ${getContactValue(c,"lastname")}`)||getContactValue(c,"email")||`Contact ${getContactValue(c,"id")||getContactValue(c,"hs_object_id")}`.trim()}function companyName(c){return getContactValue(c,"company")||"—"}function dealsCount(c){const n=Number(getContactValue(c,"num_associated_deals")||0);return Number.isFinite(n)?n:0}
+async function loadData(force=false){showLoading(force?"Refreshing contacts data…":"Loading contacts data…");for(const path of DATA_PATHS){try{const url=`${path}${path.includes("?")?"&":"?"}v=${force?Date.now():"1"}`;const res=await fetch(url,{cache:"no-store"});if(!res.ok)continue;const data=await res.json();const contacts=extractContacts(data);if(!Array.isArray(contacts)||!contacts.length)continue;state.raw=data;state.contacts=normalizeContacts(contacts);state.filtered=[...state.contacts];state.loadedPath=path;populateFilters();applyFiltersAndRender();const gen=data.generatedAt?new Date(data.generatedAt).toLocaleString("en-GB"):"Unknown";$("sync-status").textContent=`Loaded ${formatNumber(state.contacts.length)} contacts · ${gen}`;$("load-notice").innerHTML=`<strong>Loaded successfully:</strong> ${formatNumber(state.contacts.length)} contacts from <span class="uid">${path}</span>. Last sync: ${gen}.`;return}catch(e){console.warn("Failed path:",path,e)}}$("sync-status").textContent="Could not load contacts";$("load-notice").style.borderLeftColor="var(--red)";$("load-notice").innerHTML=`<strong>Could not load contacts data.</strong><br>Make sure <span class="uid">data/contacts.json</span> exists in the same GitHub Pages repo/folder as this HTML. If opened locally, upload it to GitHub Pages.`}
+function showLoading(msg){$("sync-status").textContent=msg;$("load-notice").style.borderLeftColor="var(--primary)";$("load-notice").innerHTML=`<span class="loader"></span><strong>${msg}</strong>`}
+function extractContacts(d){if(Array.isArray(d))return d;if(Array.isArray(d.contacts))return d.contacts;if(Array.isArray(d.data?.contacts))return d.data.contacts;if(Array.isArray(d.results))return d.results;return[]}
+function normalizeContacts(arr){return arr.map(c=>{const p=c.properties||{},id=clean(c.id||c.hs_object_id||p.hs_object_id);return{...c,id,hs_object_id:clean(c.hs_object_id||p.hs_object_id||id),firstname:clean(c.firstname||p.firstname),lastname:clean(c.lastname||p.lastname),email:clean(c.email||p.email).toLowerCase(),phone:clean(c.phone||p.phone),company:clean(c.company||p.company),createdate:clean(c.createdate||c.hs_createdate||p.createdate||p.hs_createdate||c.createdAt),hs_createdate:clean(c.hs_createdate||p.hs_createdate||c.createdate||p.createdate||c.createdAt),lastmodifieddate:clean(c.lastmodifieddate||p.lastmodifieddate||c.updatedAt),hubspot_owner_id:clean(c.hubspot_owner_id||p.hubspot_owner_id),lifecyclestage:clean(c.lifecyclestage||p.lifecyclestage),hs_lead_status:clean(c.hs_lead_status||p.hs_lead_status),hs_analytics_source:clean(c.hs_analytics_source||p.hs_analytics_source),lead_source:clean(c.lead_source||p.lead_source),original_source:clean(c.original_source||p.original_source),country:clean(c.country||p.country),num_associated_deals:clean(c.num_associated_deals||p.num_associated_deals||"0"),archived:Boolean(c.archived)}})}
+function countBy(items,fn){const out={};items.forEach(x=>{const k=normalizeKey(typeof fn==="function"?fn(x):x[fn]);out[k]=(out[k]||0)+1});return out}function countTop(items,fn,limit=10){return Object.entries(countBy(items,fn)).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,limit)}function uniqueValues(vals){return[...new Set(vals.map(normalizeKey))].sort((a,b)=>a==="Unknown"?1:b==="Unknown"?-1:a.localeCompare(b))}
+function populateFilters(){const ownerSelect=$("filter-owner"),life=$("filter-lifecycle"),lead=$("filter-lead-status"),country=$("filter-country");ownerSelect.innerHTML='<option value="">All Owners</option>';life.innerHTML='<option value="">All Stages</option>';lead.innerHTML='<option value="">All Statuses</option>';country.innerHTML='<option value="">All Countries</option>';const ownerCounts=countBy(state.contacts,c=>getOwnerId(c)||"unassigned"),groups={bdr:[],sales:[],other:[],unassigned:[]};Object.keys(ownerCounts).forEach(id=>{const info=ownerInfo(id==="unassigned"?"":id);groups[info.roleGroup]?.push({id,info,count:ownerCounts[id]})});Object.entries({bdr:"BDR Team",sales:"Sales",other:"Other / Unmapped",unassigned:"Unassigned"}).forEach(([g,label])=>{const arr=(groups[g]||[]).sort((a,b)=>b.count-a.count||a.info.name.localeCompare(b.info.name));if(!arr.length)return;const og=document.createElement("optgroup");og.label=label;arr.forEach(({id,info,count})=>{const opt=document.createElement("option");opt.value=id==="unassigned"?"__unassigned__":id;opt.textContent=`${info.name} (${id==="unassigned"?"Unassigned":id}) · ${formatNumber(count)}`;og.appendChild(opt)});ownerSelect.appendChild(og)});uniqueValues(state.contacts.map(c=>getContactValue(c,"lifecyclestage"))).forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=lifecycleLabel(v);life.appendChild(o)});uniqueValues(state.contacts.map(c=>getContactValue(c,"hs_lead_status"))).forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v||"Unknown";lead.appendChild(o)});uniqueValues(state.contacts.map(c=>getContactValue(c,"country"))).forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v||"Unknown";country.appendChild(o)});renderMappingTable()}
+function resetFilters(){["filter-team","filter-owner","filter-lifecycle","filter-lead-status","filter-country","filter-date","filter-search"].forEach(id=>$(id).value="");applyFiltersAndRender()}
+function applyFiltersAndRender(){const team=$("filter-team").value,owner=$("filter-owner").value,life=$("filter-lifecycle").value,lead=$("filter-lead-status").value,country=$("filter-country").value,date=$("filter-date").value,search=clean($("filter-search").value).toLowerCase(),now=new Date();state.filtered=state.contacts.filter(c=>{const info=ownerInfo(getOwnerId(c));if(team){if(team==="unassigned"&&info.roleGroup!=="unassigned")return false;if(team!=="unassigned"&&info.roleGroup!==team)return false}if(owner){const om=owner==="__unassigned__"?"":owner;if(getOwnerId(c)!==om)return false}if(life&&normalizeKey(getContactValue(c,"lifecyclestage"))!==life)return false;if(lead&&normalizeKey(getContactValue(c,"hs_lead_status"))!==lead)return false;if(country&&normalizeKey(getContactValue(c,"country"))!==country)return false;if(date){const cr=safeDate(getContactValue(c,"createdate")||getContactValue(c,"hs_createdate"));if(date==="today"&&(!cr||!isSameDayUTC(cr,now)))return false;if(date==="7d"&&!inLastDays(cr,7,now))return false;if(date==="30d"&&!inLastDays(cr,30,now))return false;if(date==="mtd"&&!inMTD(cr,now))return false;if(date==="ytd"&&!inYTD(cr,now))return false}if(search){const hay=[fullName(c),getContactValue(c,"email"),getContactValue(c,"phone"),companyName(c),getOwnerId(c),getContactValue(c,"id"),getContactValue(c,"hs_object_id"),getContactValue(c,"country")].join(" ").toLowerCase();if(!hay.includes(search))return false}return true});renderAll()}
+function renderAll(){if(!state.contacts.length)return;renderKpis();renderCharts();renderContactsTable();renderOwnersTable();renderQuality();renderReadiness()}
+function getMetrics(arr){let bdr=0,sales=0,other=0,unassigned=0,withDeals=0,createdMtd=0,createdYtd=0,modified7d=0,missingEmail=0,missingCompany=0,missingCountry=0;arr.forEach(c=>{const info=ownerInfo(getOwnerId(c));if(info.roleGroup==="bdr")bdr++;else if(info.roleGroup==="sales")sales++;else if(info.roleGroup==="unassigned")unassigned++;else other++;if(dealsCount(c)>0)withDeals++;if(!getContactValue(c,"email"))missingEmail++;if(!getContactValue(c,"company"))missingCompany++;if(!getContactValue(c,"country"))missingCountry++;const cr=safeDate(getContactValue(c,"createdate")||getContactValue(c,"hs_createdate")),mo=safeDate(getContactValue(c,"lastmodifieddate"));if(inMTD(cr))createdMtd++;if(inYTD(cr))createdYtd++;if(inLastDays(mo,7))modified7d++});return{bdr,sales,other,unassigned,withDeals,createdMtd,createdYtd,modified7d,missingEmail,missingCompany,missingCountry}}
+function renderKpis(){const all=state.contacts,fil=state.filtered,am=getMetrics(all),fm=getMetrics(fil);$("kpi-total").textContent=formatNumber(all.length);$("kpi-filtered").textContent=formatNumber(fil.length);$("kpi-filtered-sub").textContent=`${formatPercent(fil.length,all.length)} of all contacts`;const gen=state.raw?.generatedAt?new Date(state.raw.generatedAt).toLocaleString("en-GB"):"No generatedAt";$("kpi-generated").textContent=`Source: ${state.loadedPath||"data/contacts.json"} · ${gen}`;$("kpi-bdr").textContent=formatNumber(am.bdr);$("kpi-bdr-sub").textContent=`${formatPercent(am.bdr,all.length)} of total contacts`;$("kpi-sales").textContent=formatNumber(am.sales);$("kpi-sales-sub").textContent=`${formatPercent(am.sales,all.length)} of total contacts`;$("kpi-mtd").textContent=formatNumber(fm.createdMtd);$("kpi-ytd").textContent=formatNumber(fm.createdYtd);$("kpi-mod7").textContent=formatNumber(fm.modified7d);$("kpi-with-deals").textContent=formatNumber(fm.withDeals);$("kpi-unassigned").textContent=formatNumber(fm.unassigned);$("kpi-missing-email").textContent=formatNumber(fm.missingEmail);$("kpi-missing-company").textContent=formatNumber(fm.missingCompany);$("kpi-missing-country").textContent=formatNumber(fm.missingCountry);$("kpi-dup-email").textContent=formatNumber(getDuplicateEmailStats(fil).duplicateRows);const owners=Object.keys(countBy(all.filter(c=>getOwnerId(c)),getOwnerId));const unmapped=owners.filter(id=>id&&!OWNER_MAP[id]);$("kpi-active-owners").textContent=formatNumber(owners.length);$("kpi-unmapped-owners").textContent=formatNumber(unmapped.length)}
+function destroyChart(id){if(state.charts[id]){state.charts[id].destroy();delete state.charts[id]}}function makeBar(id,labels,values,label,color="#1a56e8"){destroyChart(id);const el=$(id);if(!el)return;state.charts[id]=new Chart(el,{type:"bar",data:{labels,datasets:[{label,data:values,backgroundColor:color,borderRadius:5}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:"#f1f5f9"},beginAtZero:true}}}})}function makeDonut(id,labels,values){destroyChart(id);const el=$(id);if(!el)return;state.charts[id]=new Chart(el,{type:"doughnut",data:{labels,datasets:[{data:values,backgroundColor:COLORS,borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:"bottom"}},cutout:"64%"}})}
+function renderCharts(){const own=countTop(state.filtered,c=>ownerInfo(getOwnerId(c)).name,10);makeBar("chart-owner",own.map(x=>x[0]),own.map(x=>x[1]),"Contacts","#1a56e8");$("owner-chart-badge").textContent=`${formatNumber(state.filtered.length)} filtered`;const m=getMetrics(state.filtered);makeDonut("chart-team",["BDR","Sales","Other / Unmapped","Unassigned"],[m.bdr,m.sales,m.other,m.unassigned]);const life=countTop(state.filtered,c=>lifecycleLabel(getContactValue(c,"lifecyclestage")),12);makeDonut("chart-lifecycle",life.map(x=>x[0]),life.map(x=>x[1]));const src=countTop(state.filtered,sourceLabel,10);makeDonut("chart-source",src.map(x=>x[0]),src.map(x=>x[1]));makeBar("chart-quality",["Missing Email","Missing Company","Missing Country","Unassigned","With Deals"],[m.missingEmail,m.missingCompany,m.missingCountry,m.unassigned,m.withDeals],"Contacts","#d97706");const country=countTop(state.filtered,c=>getContactValue(c,"country")||"Unknown",12);makeBar("chart-country",country.map(x=>x[0]),country.map(x=>x[1]),"Contacts","#059669")}
+function renderContactsTable(){const rows=state.filtered.slice().sort((a,b)=>(safeDate(getContactValue(b,"lastmodifieddate"))?.getTime()||0)-(safeDate(getContactValue(a,"lastmodifieddate"))?.getTime()||0)).slice(0,CONTACT_TABLE_LIMIT);$("contacts-table-badge").textContent=`${formatNumber(state.filtered.length)} filtered`;$("contacts-limit-label").textContent=formatNumber(CONTACT_TABLE_LIMIT);const tb=$("contacts-table-body");if(!rows.length){tb.innerHTML=`<tr><td colspan="12"><div class="empty-state">No contacts match current filters.</div></td></tr>`;return}tb.innerHTML=rows.map(c=>{const o=ownerInfo(getOwnerId(c)),d=dealsCount(c);return`<tr><td><div class="owner-cell"><span class="avatar">${escapeHtml((fullName(c).slice(0,2)||"C").toUpperCase())}</span><strong>${escapeHtml(fullName(c))}</strong></div></td><td>${escapeHtml(getContactValue(c,"email")||"—")}</td><td>${escapeHtml(companyName(c))}</td><td><div class="owner-cell"><span class="avatar">${escapeHtml(o.initials)}</span>${escapeHtml(o.name)}</div></td><td><span class="team-tag ${teamClass(o)}">${escapeHtml(o.team)}</span></td><td><span class="status blue">${escapeHtml(lifecycleLabel(getContactValue(c,"lifecyclestage")))}</span></td><td>${escapeHtml(getContactValue(c,"hs_lead_status")||"—")}</td><td>${escapeHtml(getContactValue(c,"country")||"—")}</td><td>${d>0?`<span class="status green">${d}</span>`:`<span class="status gray">0</span>`}</td><td>${dateLabel(getContactValue(c,"createdate")||getContactValue(c,"hs_createdate"))}</td><td>${dateLabel(getContactValue(c,"lastmodifieddate"))}</td><td><span class="uid">${escapeHtml(getContactValue(c,"hs_object_id")||getContactValue(c,"id"))}</span></td></tr>`}).join("")}
+function renderOwnersTable(){const total=state.contacts.length||1,groups={};state.contacts.forEach(c=>{const id=getOwnerId(c)||"__unassigned__";if(!groups[id]){groups[id]={id,info:ownerInfo(id==="__unassigned__"?"":id),contacts:0,withDeals:0,createdMtd:0,createdYtd:0,missingEmail:0}}const r=groups[id];r.contacts++;if(dealsCount(c)>0)r.withDeals++;if(!getContactValue(c,"email"))r.missingEmail++;const cr=safeDate(getContactValue(c,"createdate")||getContactValue(c,"hs_createdate"));if(inMTD(cr))r.createdMtd++;if(inYTD(cr))r.createdYtd++});const rows=Object.values(groups).sort((a,b)=>b.contacts-a.contacts||a.info.name.localeCompare(b.info.name));$("owners-table-body").innerHTML=rows.map(r=>{const idDisplay=r.id==="__unassigned__"?"—":r.id,role=r.info.roleGroup==="bdr"?"BDR":r.info.roleGroup==="sales"?"Sales":r.info.roleGroup==="unassigned"?"Unassigned":"Other",pct=r.contacts/total*100;return`<tr><td><div class="owner-cell"><span class="avatar">${escapeHtml(r.info.initials)}</span><strong>${escapeHtml(r.info.name)}</strong></div></td><td><span class="uid">${escapeHtml(idDisplay)}</span></td><td><span class="status ${r.info.roleGroup==="bdr"?"purple":r.info.roleGroup==="sales"?"green":r.info.roleGroup==="unassigned"?"orange":"gray"}">${escapeHtml(role)}</span></td><td><span class="team-tag ${teamClass(r.info)}">${escapeHtml(r.info.team)}</span></td><td>${formatNumber(r.contacts)}</td><td>${formatNumber(r.withDeals)}</td><td>${formatNumber(r.createdMtd)}</td><td>${formatNumber(r.createdYtd)}</td><td>${formatNumber(r.missingEmail)}</td><td><div style="display:flex;align-items:center;gap:8px">${pct.toFixed(1)}%<div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100,pct)}%"></div></div></div></td></tr>`}).join("")}
+function renderMappingTable(){const rows=Object.entries(OWNER_MAP).sort((a,b)=>a[1].roleGroup.localeCompare(b[1].roleGroup)||a[1].team.localeCompare(b[1].team)||a[1].name.localeCompare(b[1].name));$("mapping-table-body").innerHTML=rows.map(([id,info])=>`<tr><td><div class="owner-cell"><span class="avatar">${escapeHtml(info.initials)}</span><strong>${escapeHtml(info.name)}</strong></div></td><td><span class="uid">${escapeHtml(id)}</span></td><td><span class="status ${info.roleGroup==="bdr"?"purple":"green"}">${info.roleGroup==="bdr"?"BDR":"Sales"}</span></td><td><span class="team-tag ${teamClass(info)}">${escapeHtml(info.team)}</span></td></tr>`).join("")}
+function getDuplicateEmailStats(arr){const counts={};arr.forEach(c=>{const e=getContactValue(c,"email").toLowerCase();if(e)counts[e]=(counts[e]||0)+1});let duplicateRows=0,duplicateEmails=0;Object.values(counts).forEach(n=>{if(n>1){duplicateEmails++;duplicateRows+=n}});return{duplicateRows,duplicateEmails}}
+function renderQuality(){const issue=state.filtered.filter(c=>!getContactValue(c,"email")||!getOwnerId(c)||!getContactValue(c,"company")||!getContactValue(c,"country"));$("quality-table-badge").textContent=`${formatNumber(issue.length)} issue rows`;const rows=issue.slice(0,QUALITY_TABLE_LIMIT),tb=$("quality-table-body");if(!rows.length){tb.innerHTML=`<tr><td colspan="7"><div class="empty-state">No quality issues in current filtered result.</div></td></tr>`;return}tb.innerHTML=rows.map(c=>{const o=ownerInfo(getOwnerId(c)),issues=[];if(!getContactValue(c,"email"))issues.push("Missing email");if(!getOwnerId(c))issues.push("Missing owner");if(!getContactValue(c,"company"))issues.push("Missing company");if(!getContactValue(c,"country"))issues.push("Missing country");return`<tr><td><strong>${escapeHtml(fullName(c))}</strong></td><td>${escapeHtml(getContactValue(c,"email")||"—")}</td><td>${escapeHtml(o.name)}</td><td>${escapeHtml(companyName(c))}</td><td>${escapeHtml(getContactValue(c,"country")||"—")}</td><td>${issues.map(i=>`<span class="status orange">${escapeHtml(i)}</span>`).join(" ")}</td><td><span class="uid">${escapeHtml(getContactValue(c,"hs_object_id")||getContactValue(c,"id"))}</span></td></tr>`}).join("")}
+function renderReadiness(){const d=state.raw||{},contacts=extractContacts(d).length||state.contacts.length,deals=Array.isArray(d.deals)?d.deals.length:0,calls=Array.isArray(d.calls)?d.calls.length:0,meetings=Array.isArray(d.meetings)?d.meetings.length:0,leads=Array.isArray(d.leads)?d.leads.length:0;$("ready-contacts").textContent=formatNumber(contacts);$("ready-deals").textContent=deals?formatNumber(deals):"Missing";$("ready-calls").textContent=calls?formatNumber(calls):"Missing";$("ready-meetings").textContent=meetings?formatNumber(meetings):"Missing";$("ready-leads").textContent=leads?formatNumber(leads):"Missing"}
+function exportFilteredCsv(){if(!state.filtered.length)return;const headers=["id","firstname","lastname","email","phone","company","hubspot_owner_id","owner_name","role_group","team","lifecyclestage","hs_lead_status","country","source","num_associated_deals","createdate","lastmodifieddate"];const rows=state.filtered.map(c=>{const o=ownerInfo(getOwnerId(c));return[getContactValue(c,"hs_object_id")||getContactValue(c,"id"),getContactValue(c,"firstname"),getContactValue(c,"lastname"),getContactValue(c,"email"),getContactValue(c,"phone"),getContactValue(c,"company"),getOwnerId(c),o.name,o.roleGroup,o.team,getContactValue(c,"lifecyclestage"),getContactValue(c,"hs_lead_status"),getContactValue(c,"country"),sourceLabel(c),dealsCount(c),getContactValue(c,"createdate")||getContactValue(c,"hs_createdate"),getContactValue(c,"lastmodifieddate")]});const csv=[headers,...rows].map(r=>r.map(csvCell).join(",")).join("\n");const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=`engagesoft-contacts-filtered-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url)}
+function csvCell(v){return`"${clean(v).replace(/"/g,'""')}"`}function escapeHtml(v){return clean(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;")}
+loadData(false);
 </script>
 </body>
 </html>
