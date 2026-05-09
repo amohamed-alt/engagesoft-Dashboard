@@ -89,7 +89,7 @@
       <div id="load-notice" class="notice"><span class="loader"></span><strong>Loading:</strong> reading latest GitHub data files…</div>
 
       <div class="filters">
-        <div class="filter"><label>Team</label><select id="filter-team"><option value="">All Teams</option><option value="bdr">BDR Team</option><option value="sales">Sales</option><option value="other">Other / Unmapped</option><option value="unassigned">Unassigned</option></select></div>
+        <div class="filter"><label>Team</label><select id="filter-team"><option value="">All Teams</option><option value="bdr">BDR Team</option><option value="sales">Sales</option><option value="other">Other / Unmapped</option></select></div>
         <div class="filter"><label>Owner</label><select id="filter-owner"><option value="">All Owners</option></select></div>
         <div class="filter"><label>Stage / Lifecycle</label><select id="filter-stage"><option value="">All Stages</option></select></div>
         <div class="filter"><label>Country</label><select id="filter-country"><option value="">All Countries</option></select></div>
@@ -130,7 +130,7 @@
           <div class="kpi"><div class="kpi-label">Filtered Contacts</div><div class="kpi-value" id="ct-filtered">—</div><div class="kpi-trend">Current filters</div></div>
           <div class="kpi"><div class="kpi-label">With Deals</div><div class="kpi-value" id="ct-deals">—</div><div class="kpi-trend">num_associated_deals</div></div>
           <div class="kpi"><div class="kpi-label">Missing Email</div><div class="kpi-value" id="ct-missing-email">—</div><div class="kpi-trend down">Data quality</div></div>
-          <div class="kpi"><div class="kpi-label">Unassigned</div><div class="kpi-value" id="ct-unassigned">—</div><div class="kpi-trend down">No owner</div></div>
+          <div class="kpi"><div class="kpi-label">No Owner</div><div class="kpi-value" id="ct-unassigned">—</div><div class="kpi-trend down">No owner</div></div>
         </div>
         <div class="panel-grid equal"><div class="panel"><div class="panel-header"><div><div class="panel-title">Lifecycle Mix</div></div></div><canvas id="chart-contact-life"></canvas></div><div class="panel"><div class="panel-header"><div><div class="panel-title">Contacts by Owner</div></div></div><canvas id="chart-contact-owner"></canvas></div></div>
         <div class="panel"><div class="panel-header"><div><div class="panel-title">Contacts Table</div></div><span class="badge" id="contacts-table-badge">—</span></div><div class="table-wrap"><table><thead><tr><th>Contact</th><th>Email</th><th>Company</th><th>Owner</th><th>Team</th><th>Lifecycle</th><th>Lead Status</th><th>Country</th><th>Deals</th><th>Created</th><th>ID</th></tr></thead><tbody id="contacts-table"></tbody></table></div></div>
@@ -141,7 +141,7 @@
           <div class="kpi"><div class="kpi-label">Total Leads</div><div class="kpi-value" id="ld-total">—</div><div class="kpi-trend">Lead object</div></div>
           <div class="kpi"><div class="kpi-label">BDR Leads</div><div class="kpi-value" id="ld-bdr">—</div><div class="kpi-trend">BDR ownership</div></div>
           <div class="kpi"><div class="kpi-label">Sales Leads</div><div class="kpi-value" id="ld-sales">—</div><div class="kpi-trend">Sales ownership</div></div>
-          <div class="kpi"><div class="kpi-label">Unassigned Leads</div><div class="kpi-value" id="ld-unassigned">—</div><div class="kpi-trend down">No owner</div></div>
+          <div class="kpi"><div class="kpi-label">No Owner Leads</div><div class="kpi-value" id="ld-unassigned">—</div><div class="kpi-trend down">No owner</div></div>
         </div>
         <div class="panel-grid equal"><div class="panel"><div class="panel-header"><div><div class="panel-title">Leads by Stage</div></div></div><canvas id="chart-lead-stage"></canvas></div><div class="panel"><div class="panel-header"><div><div class="panel-title">Leads by Owner</div></div></div><canvas id="chart-lead-owner"></canvas></div></div>
         <div class="panel"><div class="panel-header"><div><div class="panel-title">Leads Table</div></div><span class="badge orange" id="leads-table-badge">—</span></div><div class="table-wrap"><table><thead><tr><th>Lead</th><th>Owner</th><th>Team</th><th>Pipeline</th><th>Stage</th><th>Created</th><th>ID</th></tr></thead><tbody id="leads-table"></tbody></table></div></div>
@@ -259,7 +259,8 @@ const state = {
   ownerMap:{...FIXED_OWNER_MAP},
   charts:{},
   page:"bdr",
-  currentRows:[]
+  currentRows:[],
+  pageFilters:{}
 };
 
 const $ = id => document.getElementById(id);
@@ -297,17 +298,19 @@ document.querySelectorAll(".nav-item[data-page]").forEach(el => {
   el.addEventListener("click", () => switchPage(el.dataset.page));
 });
 ["filter-team","filter-owner","filter-stage","filter-country","filter-date","filter-search"].forEach(id => {
-  $(id).addEventListener("input", renderAll);
-  $(id).addEventListener("change", renderAll);
+  $(id).addEventListener("input", () => { saveCurrentPageFilters(); renderAll(); });
+  $(id).addEventListener("change", () => { saveCurrentPageFilters(); renderAll(); });
 });
 $("reset-btn").onclick = () => {
-  ["filter-team","filter-owner","filter-stage","filter-country","filter-date","filter-search"].forEach(id => $(id).value = "");
+  clearCurrentPageFilters();
+  populateFilters();
   renderAll();
 };
 $("refresh-btn").onclick = () => loadData(true);
 $("export-csv-btn").onclick = () => exportCsv();
 
 function switchPage(page){
+  saveCurrentPageFilters();
   state.page = page;
   document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
   document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add("active");
@@ -315,6 +318,7 @@ function switchPage(page){
   $(`page-${page}`)?.classList.add("active");
   $("page-title").textContent = META[page][0];
   $("page-sub").textContent = META[page][1];
+  populateFilters();
   renderAll();
 }
 
@@ -381,8 +385,8 @@ async function loadData(force=false){
     const fromMap = {};
     const toMap = {};
     for (const row of assoc.records) {
-      const fromId = clean(row.fromId || row.from?.id || row.fromObjectId);
-      const toId = clean(row.toId || row.toObjectId || row.to?.id);
+      const fromId = Array.isArray(row) ? clean(row[0]) : clean(row.fromId || row.from?.id || row.fromObjectId);
+      const toId = Array.isArray(row) ? clean(row[1]) : clean(row.toId || row.toObjectId || row.to?.id);
       if (!fromId || !toId) continue;
       if (!fromMap[fromId]) fromMap[fromId] = new Set();
       if (!toMap[toId]) toMap[toId] = new Set();
@@ -397,7 +401,7 @@ async function loadData(force=false){
 
   const total = Object.values(state.data).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
   $("sync-status").textContent = `Loaded ${fmt(total)} records`;
-  $("load-notice").innerHTML = `<strong>Loaded successfully:</strong> ${fmt(total)} records. Contacts: ${fmt(state.data.contacts.length)}, Companies: ${fmt(state.data.companies.length)}, Deals: ${fmt(state.data.deals.length)}, Leads: ${fmt(state.data.leads.length)}, Calls: ${fmt(state.data.calls.length)}, Meetings: ${fmt(state.data.meetings.length)}.`;
+  $("load-notice").innerHTML = `<strong>Loaded successfully:</strong> ${fmt(total)} records. Filters are page-specific. Contacts: ${fmt(state.data.contacts.length)}, Companies: ${fmt(state.data.companies.length)}, Deals: ${fmt(state.data.deals.length)}, Leads: ${fmt(state.data.leads.length)}, Calls: ${fmt(state.data.calls.length)}, Meetings: ${fmt(state.data.meetings.length)}.`;
 }
 
 function initials(value){
@@ -406,7 +410,7 @@ function initials(value){
 
 function ownerInfo(id){
   const oid = clean(id);
-  if (!oid) return { id:"", name:"Unassigned", roleGroup:"unassigned", team:"Unassigned", initials:"UA" };
+  if (!oid) return { id:"", name:"No Owner", roleGroup:"unassigned", team:"No Owner", initials:"UA" };
   return state.ownerMap[oid] || { id:oid, name:`Unmapped Owner ${oid}`, roleGroup:"other", team:"Other / Unmapped", initials:"U" };
 }
 
@@ -433,7 +437,56 @@ function allMainRecords(){
   return [...state.data.contacts, ...state.data.companies, ...state.data.deals, ...state.data.leads, ...state.data.calls, ...state.data.meetings];
 }
 
+function currentFilterValues(){
+  return {
+    team:$("filter-team").value,
+    owner:$("filter-owner").value,
+    stage:$("filter-stage").value,
+    country:$("filter-country").value,
+    date:$("filter-date").value,
+    search:clean($("filter-search").value)
+  };
+}
+
+function saveCurrentPageFilters(){
+  state.pageFilters[state.page] = currentFilterValues();
+}
+
+function clearCurrentPageFilters(){
+  state.pageFilters[state.page] = { team:"", owner:"", stage:"", country:"", date:"", search:"" };
+  ["filter-team","filter-owner","filter-stage","filter-country","filter-date","filter-search"].forEach(id => $(id).value = "");
+}
+
+function pageTypes(page = state.page){
+  const map = {
+    bdr:["contacts","companies","leads","calls","meetings"],
+    followup:["deals","calls","meetings"],
+    contacts:["contacts"],
+    leads:["leads"],
+    won:["deals"],
+    sales:["contacts","companies","deals","calls","meetings"],
+    pipeline:["deals"],
+    tam:["companies"],
+    quality:["contacts","companies","deals","leads","calls","meetings"]
+  };
+  return map[page] || ["contacts","companies","deals","leads","calls","meetings"];
+}
+
+function pageRecords(page = state.page){
+  return pageTypes(page).flatMap(type => state.data[type] || []);
+}
+
+function applyFilterValues(values){
+  $("filter-team").value = values.team || "";
+  $("filter-date").value = values.date || "";
+  $("filter-search").value = values.search || "";
+  $("filter-owner").value = [...$("filter-owner").options].some(o => o.value === (values.owner || "")) ? (values.owner || "") : "";
+  $("filter-stage").value = [...$("filter-stage").options].some(o => o.value === (values.stage || "")) ? (values.stage || "") : "";
+  $("filter-country").value = [...$("filter-country").options].some(o => o.value === (values.country || "")) ? (values.country || "") : "";
+}
+
 function populateFilters(){
+  const saved = state.pageFilters[state.page] || { team:"", owner:"", stage:"", country:"", date:"", search:"" };
   const ownerSelect = $("filter-owner");
   const stageSelect = $("filter-stage");
   const countrySelect = $("filter-country");
@@ -442,29 +495,46 @@ function populateFilters(){
   stageSelect.innerHTML = `<option value="">All Stages</option>`;
   countrySelect.innerHTML = `<option value="">All Countries</option>`;
 
+  const records = pageRecords(state.page).filter(r => ownerId(r));
   const ownerCounts = {};
-  allMainRecords().forEach(r => {
-    const id = ownerId(r) || "__unassigned__";
+  records.forEach(r => {
+    const id = ownerId(r);
+    if (!id) return;
     ownerCounts[id] = (ownerCounts[id] || 0) + 1;
   });
 
   Object.entries(ownerCounts).sort((a,b) => b[1] - a[1]).forEach(([id,count]) => {
-    const info = ownerInfo(id === "__unassigned__" ? "" : id);
+    const info = ownerInfo(id);
     ownerSelect.innerHTML += `<option value="${esc(id)}">${esc(info.name)} · ${fmt(count)}</option>`;
   });
 
   const stages = new Set();
   const countries = new Set();
-  state.data.contacts.forEach(r => {
-    stages.add(clean(prop(r,"lifecyclestage")) || "Unknown");
-    countries.add(clean(prop(r,"country")) || "Unknown");
+  const currentTypes = new Set(pageTypes(state.page));
+
+  if (currentTypes.has("contacts")) state.data.contacts.forEach(r => {
+    const s = clean(prop(r,"lifecyclestage"));
+    const c = clean(prop(r,"country"));
+    if (s) stages.add(s);
+    if (c) countries.add(c);
   });
-  state.data.deals.forEach(r => stages.add(clean(prop(r,"dealstage")) || "Unknown"));
-  state.data.leads.forEach(r => stages.add(clean(prop(r,"hs_pipeline_stage")) || "Unknown"));
-  state.data.companies.forEach(r => countries.add(clean(prop(r,"country")) || "Unknown"));
+  if (currentTypes.has("deals")) state.data.deals.forEach(r => {
+    const s = clean(prop(r,"dealstage"));
+    if (s) stages.add(s);
+  });
+  if (currentTypes.has("leads")) state.data.leads.forEach(r => {
+    const s = clean(prop(r,"hs_pipeline_stage"));
+    if (s) stages.add(s);
+  });
+  if (currentTypes.has("companies")) state.data.companies.forEach(r => {
+    const c = clean(prop(r,"country"));
+    if (c) countries.add(c);
+  });
 
   [...stages].sort().forEach(s => stageSelect.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`);
   [...countries].sort().forEach(c => countrySelect.innerHTML += `<option value="${esc(c)}">${esc(c)}</option>`);
+
+  applyFilterValues(saved);
 }
 
 function filterState(){
@@ -541,7 +611,7 @@ function filtered(type){
 }
 
 function recordsByRole(type, role){
-  return filtered(type).filter(r => ownerInfo(ownerId(r)).roleGroup === role);
+  return filtered(type).filter(r => ownerId(r) && ownerInfo(ownerId(r)).roleGroup === role);
 }
 
 function isClosed(deal){
@@ -649,28 +719,29 @@ function renderBDR(){
 
   const stats = {};
   function ensure(id){
-    const key = id || "__unassigned__";
+    if (!id) return null;
+    const key = id;
     if (!stats[key]) stats[key] = { id:key, contacts:0, leads:0, calls:0, connected:0, meetings:0, companies:0 };
     return stats[key];
   }
-  contacts.forEach(r => ensure(ownerId(r)).contacts++);
-  leads.forEach(r => ensure(ownerId(r)).leads++);
-  calls.forEach(r => { const s = ensure(ownerId(r)); s.calls++; if (isConnectedCall(r)) s.connected++; });
-  meetings.forEach(r => ensure(ownerId(r)).meetings++);
-  companies.forEach(r => ensure(ownerId(r)).companies++);
+  contacts.forEach(r => { const s = ensure(ownerId(r)); if (s) s.contacts++; });
+  leads.forEach(r => { const s = ensure(ownerId(r)); if (s) s.leads++; });
+  calls.forEach(r => { const s = ensure(ownerId(r)); if (!s) return; s.calls++; if (isConnectedCall(r)) s.connected++; });
+  meetings.forEach(r => { const s = ensure(ownerId(r)); if (s) s.meetings++; });
+  companies.forEach(r => { const s = ensure(ownerId(r)); if (s) s.companies++; });
 
   const rows = Object.values(stats).sort((a,b) => (b.contacts+b.leads+b.calls+b.meetings) - (a.contacts+a.leads+a.calls+a.meetings));
   state.currentRows = rows;
   $("bdr-table-badge").textContent = `${fmt(rows.length)} owners`;
-  setTable("bdr-table", rows.map(r => `<tr><td>${ownerCell(r.id==="__unassigned__"?"":r.id)}</td><td><span class="uid">${esc(r.id==="__unassigned__"?"—":r.id)}</span></td><td>${fmt(r.contacts)}</td><td>${fmt(r.leads)}</td><td>${fmt(r.calls)}</td><td>${fmt(r.connected)}</td><td>${fmt(r.meetings)}</td><td>${fmt(r.companies)}</td></tr>`), 8);
+  setTable("bdr-table", rows.map(r => `<tr><td>${ownerCell(r.id==="__unassigned__"?"":r.id)}</td><td><span class="uid">${esc(r.id)}</span></td><td>${fmt(r.contacts)}</td><td>${fmt(r.leads)}</td><td>${fmt(r.calls)}</td><td>${fmt(r.connected)}</td><td>${fmt(r.meetings)}</td><td>${fmt(r.companies)}</td></tr>`), 8);
 
   const ownerData = rows.slice(0,10);
-  makeChart("chart-bdr-owner","bar",ownerData.map(r => ownerInfo(r.id==="__unassigned__"?"":r.id).name), ownerData.map(r => r.calls + r.meetings + r.leads), "BDR Activity");
+  makeChart("chart-bdr-owner","bar",ownerData.map(r => ownerInfo(r.id).name), ownerData.map(r => r.calls + r.meetings + r.leads), "BDR Activity");
   makeChart("chart-bdr-mix","doughnut",["Contacts","Leads","Calls","Meetings","Companies"],[contacts.length,leads.length,calls.length,meetings.length,companies.length],"BDR Mix");
 }
 
 function renderFollowUp(){
-  const deals = filtered("deals");
+  const deals = filtered("deals").filter(d => ownerId(d));
   const open = deals.filter(d => !isClosed(d));
   const withNext = open.filter(hasNextActivity);
   const withoutNext = open.filter(d => !hasNextActivity(d));
@@ -681,7 +752,7 @@ function renderFollowUp(){
   $("fu-no-next").textContent = fmt(withoutNext.length);
   $("fu-touched").textContent = fmt(touched.length);
 
-  const byOwner = topEntries(countBy(withoutNext, d => ownerInfo(ownerId(d)).name), 10);
+  const byOwner = topEntries(countBy(withoutNext.filter(d => ownerId(d)), d => ownerInfo(ownerId(d)).name), 10);
   makeChart("chart-followup-owner","bar",byOwner.map(x=>x[0]), byOwner.map(x=>x[1]), "Needs Follow-Up");
   makeChart("chart-followup-mix","doughnut",["With Next Activity","Without Next Activity","Recently Touched"],[withNext.length,withoutNext.length,touched.length],"Follow-Up");
 
@@ -691,7 +762,7 @@ function renderFollowUp(){
 }
 
 function renderContacts(){
-  const all = filtered("contacts");
+  const all = filtered("contacts").filter(c => ownerId(c));
   $("ct-total").textContent = fmt(state.data.contacts.length);
   $("ct-filtered").textContent = fmt(all.length);
   $("ct-deals").textContent = fmt(all.filter(c => Number(prop(c,"num_associated_deals") || 0) > 0).length);
@@ -699,7 +770,7 @@ function renderContacts(){
   $("ct-unassigned").textContent = fmt(all.filter(c => !ownerId(c)).length);
 
   makeChart("chart-contact-life","doughnut",...entriesForChart(countBy(all, c => prop(c,"lifecyclestage") || "Unknown"), 12));
-  makeChart("chart-contact-owner","bar",...entriesForChart(countBy(all, c => ownerInfo(ownerId(c)).name), 10));
+  makeChart("chart-contact-owner","bar",...entriesForChart(countBy(all.filter(c => ownerId(c)), c => ownerInfo(ownerId(c)).name), 10));
 
   state.currentRows = all;
   $("contacts-table-badge").textContent = `${fmt(all.length)} contacts`;
@@ -707,14 +778,14 @@ function renderContacts(){
 }
 
 function renderLeads(){
-  const all = filtered("leads");
+  const all = filtered("leads").filter(l => ownerId(l));
   $("ld-total").textContent = fmt(all.length);
   $("ld-bdr").textContent = fmt(all.filter(l => ownerInfo(ownerId(l)).roleGroup === "bdr").length);
   $("ld-sales").textContent = fmt(all.filter(l => ownerInfo(ownerId(l)).roleGroup === "sales").length);
   $("ld-unassigned").textContent = fmt(all.filter(l => !ownerId(l)).length);
 
   makeChart("chart-lead-stage","doughnut",...entriesForChart(countBy(all, l => prop(l,"hs_pipeline_stage") || "Unknown"), 12));
-  makeChart("chart-lead-owner","bar",...entriesForChart(countBy(all, l => ownerInfo(ownerId(l)).name), 10));
+  makeChart("chart-lead-owner","bar",...entriesForChart(countBy(all.filter(l => ownerId(l)), l => ownerInfo(ownerId(l)).name), 10));
 
   state.currentRows = all;
   $("leads-table-badge").textContent = `${fmt(all.length)} leads`;
@@ -722,7 +793,7 @@ function renderLeads(){
 }
 
 function renderWon(){
-  const won = filtered("deals").filter(isWon);
+  const won = filtered("deals").filter(d => ownerId(d)).filter(isWon);
   const now = new Date();
   const wonMtd = won.filter(d => { const cd = safeDate(prop(d,"closedate")); return cd && cd.getUTCFullYear() === now.getUTCFullYear() && cd.getUTCMonth() === now.getUTCMonth(); });
   const wonYtd = won.filter(d => { const cd = safeDate(prop(d,"closedate")); return cd && cd.getUTCFullYear() === now.getUTCFullYear(); });
@@ -732,7 +803,7 @@ function renderWon(){
   $("won-mtd").textContent = fmt(wonMtd.length);
   $("won-ytd").textContent = fmt(wonYtd.length);
 
-  makeChart("chart-won-owner","bar",...entriesForChart(sumBy(won, d => ownerInfo(ownerId(d)).name), 10));
+  makeChart("chart-won-owner","bar",...entriesForChart(sumBy(won.filter(d => ownerId(d)), d => ownerInfo(ownerId(d)).name), 10));
   makeChart("chart-won-pipeline","doughnut",...entriesForChart(countBy(won, d => prop(d,"pipeline") || "Unknown"), 10));
 
   state.currentRows = won;
@@ -753,8 +824,8 @@ function renderSales(){
   $("sa-deals").textContent = fmt(deals.length);
   $("sa-coverage").textContent = `${coverage}%`;
 
-  makeChart("chart-sales-calls","bar",...entriesForChart(countBy(calls, c => ownerInfo(ownerId(c)).name), 10));
-  makeChart("chart-sales-meetings","bar",...entriesForChart(countBy(meetings, m => ownerInfo(ownerId(m)).name), 10));
+  makeChart("chart-sales-calls","bar",...entriesForChart(countBy(calls.filter(c => ownerId(c)), c => ownerInfo(ownerId(c)).name), 10));
+  makeChart("chart-sales-meetings","bar",...entriesForChart(countBy(meetings.filter(m => ownerId(m)), m => ownerInfo(ownerId(m)).name), 10));
 
   const rows = [...calls.map(r => ({...r, _type:"Call"})), ...meetings.map(r => ({...r, _type:"Meeting"}))]
     .sort((a,b) => (safeDate(dateVal(b))?.getTime() || 0) - (safeDate(dateVal(a))?.getTime() || 0));
@@ -765,7 +836,7 @@ function renderSales(){
 }
 
 function renderPipeline(){
-  const deals = filtered("deals");
+  const deals = filtered("deals").filter(d => ownerId(d));
   const open = deals.filter(d => !isClosed(d));
   const closed = deals.filter(isClosed);
   const won = deals.filter(isWon);
@@ -783,7 +854,7 @@ function renderPipeline(){
   $("pl-velocity").textContent = money(velocity);
 
   makeChart("chart-pipeline-stage","doughnut",...entriesForChart(sumBy(open, d => prop(d,"dealstage") || "Unknown"), 12));
-  makeChart("chart-pipeline-owner","bar",...entriesForChart(sumBy(open, d => ownerInfo(ownerId(d)).name), 10));
+  makeChart("chart-pipeline-owner","bar",...entriesForChart(sumBy(open.filter(d => ownerId(d)), d => ownerInfo(ownerId(d)).name), 10));
 
   state.currentRows = open;
   $("pipeline-table-badge").textContent = `${fmt(open.length)} open deals`;
@@ -791,7 +862,7 @@ function renderPipeline(){
 }
 
 function renderTAM(){
-  const companies = filtered("companies");
+  const companies = filtered("companies").filter(c => ownerId(c));
   const companyDealMap = state.associationMap["company-deal"]?.fromMap || {};
   const companyCallMap = state.associationMap["company-call"]?.fromMap || {};
   const companyMeetingMap = state.associationMap["company-meeting"]?.fromMap || {};
@@ -807,7 +878,7 @@ function renderTAM(){
   $("tam-with-meetings").textContent = fmt(withMeetings.length);
 
   makeChart("chart-tam-country","bar",...entriesForChart(countBy(companies, c => prop(c,"country") || "Unknown"), 10));
-  makeChart("chart-tam-owner","bar",...entriesForChart(countBy(companies, c => ownerInfo(ownerId(c)).name), 10));
+  makeChart("chart-tam-owner","bar",...entriesForChart(countBy(companies.filter(c => ownerId(c)), c => ownerInfo(ownerId(c)).name), 10));
 
   state.currentRows = companies;
   $("tam-table-badge").textContent = `${fmt(companies.length)} companies`;
