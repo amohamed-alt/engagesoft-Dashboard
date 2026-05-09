@@ -73,6 +73,28 @@
     .mini-item span{color:var(--muted);font-size:11.5px;text-align:right}
     .click-hint{font-size:10.5px;color:var(--muted);font-weight:800;margin-top:8px;text-transform:uppercase;letter-spacing:.05em}
 
+
+    .report.wide{grid-column:1/-1}
+    .report-grid .report:has(.table-wrap){grid-column:1/-1}
+    .report{min-height:220px}
+    .report .kpi-value{cursor:pointer}
+    .report-actions{margin-top:12px}
+    .details-list{display:none;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+    .details-list.open{display:block}
+    .mini-list{display:grid;gap:7px;max-height:420px;overflow:auto}
+    .mini-item{display:grid;grid-template-columns:minmax(180px,1fr) auto;gap:12px;align-items:center;padding:9px 10px;border:1px solid #edf2f8;background:#f8fafc;border-radius:9px;font-size:12.5px}
+    .mini-item strong{font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mini-item span{color:var(--muted);font-size:11.5px;text-align:right;white-space:nowrap}
+    .see-more-btn{border:1px solid var(--line);background:#fff;color:var(--primary);border-radius:7px;padding:6px 12px;font:800 11.5px "IBM Plex Sans";cursor:pointer}
+    .see-more-btn:hover{background:var(--primary-soft)}
+    th.sortable{cursor:pointer;user-select:none}
+    th.sortable:hover{color:var(--primary);background:#eef4ff}
+    th.sortable:after{content:" ↕";font-size:10px;color:#94a3b8}
+    .hs-link{color:var(--primary);font-weight:800;text-decoration:none}
+    .hs-link:hover{text-decoration:underline}
+    .hs-open{font-size:10.5px;font-weight:800;color:var(--primary);text-decoration:none;background:var(--primary-soft);padding:3px 7px;border-radius:6px}
+    .hs-open:hover{text-decoration:underline}
+
     @media(max-width:1200px){.report-grid,.report-grid.three,.kpi-row{grid-template-columns:repeat(2,1fr)}}@media(max-width:860px){:root{--sidebar-w:0}.sidebar{display:none}.main{margin-left:0}.report-grid,.report-grid.three,.kpi-row{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.content{padding:18px 14px 36px}}
   </style>
 </head>
@@ -516,21 +538,58 @@ function report(title, shape, metric, inner, wide=false, details=[]){
   const hasDetails = Array.isArray(details) && details.length > 0;
   const detailsHtml = hasDetails ? `
     <div class="report-actions">
-      <div class="click-hint">Click report or use See more</div>
       <button class="see-more-btn" onclick="event.stopPropagation(); toggleDetails('${id}', this)">See more</button>
     </div>
     <div class="details-list" id="${id}">
       <div class="mini-list">
-        ${details.slice(0,80).map(item => `<div class="mini-item"><strong>${esc(item.title || item.name || item.label || 'Record')}</strong><span>${esc(item.meta || item.value || item.note || '')}</span></div>`).join("")}
+        ${details.slice(0,10).map(item => `<div class="mini-item"><strong>${item.htmlTitle || esc(item.title || item.name || item.label || 'Record')}</strong><span>${esc(item.meta || item.value || item.note || '')}</span></div>`).join("")}
+        ${details.slice(10).map(item => `<div class="mini-item extra-row ${id}" style="display:none"><strong>${item.htmlTitle || esc(item.title || item.name || item.label || 'Record')}</strong><span>${esc(item.meta || item.value || item.note || '')}</span></div>`).join("")}
       </div>
-    </div>` : `<div class="click-hint">Click to focus this report</div>`;
+      ${details.length > 10 ? `<div class="report-actions"><button class="see-more-btn" onclick="event.stopPropagation(); toggleRows('${id}', this)">See more</button></div>` : ""}
+    </div>` : "";
 
-  return `<div class="report ${wide?'wide':''}" onclick="${hasDetails ? `toggleDetails('${id}')` : ''}">
+  return `<div class="report ${wide?'wide':''}" ${hasDetails ? `onclick="toggleDetails('${id}')"` : ""}>
     <div class="report-header"><div><div class="report-title">${esc(title)}</div><div class="report-sub">${esc(metric)}</div></div><span class="shape ${shape.includes('KPI')?'kpi':shape.includes('Table')?'table':''}">${esc(shape)}</span></div>
     ${inner}
     ${detailsHtml}
   </div>`;
 }
+
+function toggleDetails(id, btn=null){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle("open");
+  if (btn) btn.textContent = el.classList.contains("open") ? "Show less" : "See more";
+}
+
+function toggleRows(className, btn){
+  const rows = document.querySelectorAll(`.${className}`);
+  const isHidden = [...rows].some(r => r.style.display === "none");
+  rows.forEach(r => r.style.display = isHidden ? "grid" : "none");
+  if (btn) btn.textContent = isHidden ? "Show less" : "See more";
+}
+
+function stripHtml(v){
+  return String(v ?? '').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+}
+
+function detailsFromRows(rows, titleIndex=0, metaIndex=1, limit=80){
+  return (rows || []).slice(0,limit).map(r => ({
+    title: String(Array.isArray(r) ? stripHtml(r[titleIndex] || '') : r?.title || ''),
+    meta: String(Array.isArray(r) ? stripHtml(r[metaIndex] || '') : r?.meta || '')
+  }));
+}
+
+function recordDetails(type, records, titleFn, metaFn, limit=80){
+  return (records || []).slice(0,limit).map(r => {
+    const label = titleFn ? titleFn(r) : idOf(r);
+    return {
+      htmlTitle: hsLink(type, r, label || idOf(r)),
+      meta: metaFn ? metaFn(r) : idOf(r)
+    };
+  });
+}
+
 
 function toggleDetails(id, btn=null){
   const el = document.getElementById(id);
@@ -562,10 +621,39 @@ function table(headers, rows, initialLimit=10){
     ? `${visibleRows.map(rowHtml).join("")}${hiddenRows.map(r => rowHtml(r).replace("<tr>", `<tr class="extra-row ${tableId}" style="display:none">`)).join("")}`
     : `<tr><td colspan="${headers.length}"><div class="empty">No records match current filters.</div></td></tr>`;
   const btn = hiddenRows.length
-    ? `<div class="report-actions"><span class="click-hint">Showing ${visibleRows.length} of ${safeRows.length}</span><button class="see-more-btn" onclick="event.stopPropagation(); toggleRows('${tableId}', this)">See more</button></div>`
+    ? `<div class="report-actions"><button class="see-more-btn" onclick="event.stopPropagation(); toggleTableRows('${tableId}', this)">See more</button></div>`
     : "";
-  return `<div class="table-wrap"><table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>${btn}`;
+  return `<div class="table-wrap"><table><thead><tr>${headers.map((h,i)=>`<th class="sortable" onclick="event.stopPropagation(); sortTable(this, ${i})">${esc(h)}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div>${btn}`;
 }
+
+function toggleTableRows(className, btn){
+  const rows = document.querySelectorAll(`.${className}`);
+  const isHidden = [...rows].some(r => r.style.display === "none");
+  rows.forEach(r => r.style.display = isHidden ? "table-row" : "none");
+  if (btn) btn.textContent = isHidden ? "Show less" : "See more";
+}
+
+function sortTable(th, columnIndex){
+  const table = th.closest("table");
+  const tbody = table?.querySelector("tbody");
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  const current = th.dataset.sortDir === "asc" ? "desc" : "asc";
+  th.closest("tr").querySelectorAll("th").forEach(h => h.dataset.sortDir = "");
+  th.dataset.sortDir = current;
+  rows.sort((a,b) => {
+    const av = stripHtml(a.children[columnIndex]?.textContent || "");
+    const bv = stripHtml(b.children[columnIndex]?.textContent || "");
+    const an = Number(av.replace(/[^0-9.-]/g,""));
+    const bn = Number(bv.replace(/[^0-9.-]/g,""));
+    const cmp = !Number.isNaN(an) && !Number.isNaN(bn) && av.match(/\d/) && bv.match(/\d/)
+      ? an - bn
+      : av.localeCompare(bv);
+    return current === "asc" ? cmp : -cmp;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
 
 function toggleRows(className, btn){
   const rows = document.querySelectorAll(`.${className}`);
@@ -599,7 +687,7 @@ function renderContacts(){
   const ownerRows=topEntries(byOwner,50).map(([o,c])=>[esc(o),fmt(c),"—","—"]);
   const html = `
     <div class="kpi-row">
-      ${report("Web page performance","Area / Line Chart","Sessions, New Contacts, Conversion Rate",kpi(fmt(contacts.length),"Sessions require web analytics property"))}
+      ${report("Web page performance","Area / Line Chart","Sessions, New Contacts, Conversion Rate",kpi(fmt(contacts.length),"Sessions require web analytics property"),false,recordDetails("contacts",contacts,c=>[prop(c,"firstname"),prop(c,"lastname")].join(" ").trim()||prop(c,"email")||idOf(c),c=>prop(c,"hs_analytics_source")||prop(c,"lead_source")||dateLabel(dateVal(c))))}
       ${report("Online Contact Created - by lead Stage","Stacked Vertical Bar Chart","Count of Contacts by Lifecycle Stage",`<canvas id="ct-life"></canvas>`)}
       ${report("Contacts created by Region","Multi-Series Vertical Bar Chart","Contacts Count by Country / Region",`<canvas id="ct-region"></canvas>`)}
       ${report("Contacts created by Online Sources","Stacked Vertical Bar Chart","Contacts by Source / Channel",`<canvas id="ct-source"></canvas>`)}
@@ -629,8 +717,8 @@ function renderFollowup(){
   const last30Calls=calls.filter(c=>inDateRange(c,{date:"30d"})), last30Meetings=meetings.filter(m=>inDateRange(m,{date:"30d"}));
   const last90Rows=topEntries(countBy([...last30Calls,...last30Meetings],r=>ownerInfo(ownerId(r)).name),50).map(([o,c])=>[esc(o),fmt(c),"—","—"]);
   const html=`<div class="kpi-row">
-    ${report("Deals with No Future Activity","KPI Card","Count of Deals",kpi(fmt(noFuture.length),"Open deals without hs_next_activity_date"))}
-    ${report("Deals with ZERO Connected Calls","KPI Card","Count of Deals",kpi(fmt(zeroConnected.length),"Needs reliable deal-call association"))}
+    ${report("Deals with No Future Activity","KPI Card","Count of Deals",kpi(fmt(noFuture.length),"Open deals without hs_next_activity_date"),false,recordDetails("deals",noFuture,d=>prop(d,"dealname")||idOf(d),d=>ownerInfo(ownerId(d)).name))}
+    ${report("Deals with ZERO Connected Calls","KPI Card","Count of Deals",kpi(fmt(zeroConnected.length),"Needs reliable deal-call association"),false,recordDetails("deals",zeroConnected,d=>prop(d,"dealname")||idOf(d),d=>ownerInfo(ownerId(d)).name))}
     ${report("Contacted Calls on Open Deals in the Last Week","Column Chart","Connected Calls Count",kpi(fmt(calls.filter(c=>inDateRange(c,{date:"7d"})&&isConnectedCall(c)).length),"Connected calls last 7 days"))}
     ${report("Contacted Calls on Companies with Deals in the Last Week","Column Chart","Companies Touched",kpi("—","Needs company-call association"))}
   </div>
@@ -661,12 +749,12 @@ function renderBDR(){
   const s=roleStats("bdr");
   const booked=s.meetings.length, completed=s.completed.length;
   const html=`<div class="kpi-row">
-    ${report("Total Calls Logged","KPI Card","Total Calls",kpi(fmt(s.calls.length)))}
-    ${report("Total Connected Calls","KPI Card","Connected Calls",kpi(fmt(s.connected.length)))}
+    ${report("Total Calls Logged","KPI Card","Total Calls",kpi(fmt(s.calls.length)),false,recordDetails("calls",s.calls,c=>prop(c,"hs_call_title")||idOf(c),c=>ownerInfo(ownerId(c)).name))}
+    ${report("Total Connected Calls","KPI Card","Connected Calls",kpi(fmt(s.connected.length)),false,recordDetails("calls",s.connected,c=>prop(c,"hs_call_title")||idOf(c),c=>ownerInfo(ownerId(c)).name))}
     ${report("Email Open Rate - BDR Total","KPI Card","Open %, Click %, Reply %",needsProperty("Need email analytics / sequence properties."))}
-    ${report("Total Contacts Created","KPI Card","Contacts Count",kpi(fmt(s.contacts.length)))}
-    ${report("Total New Companies","KPI Card","Companies Count",kpi(fmt(s.companies.length)))}
-    ${report("Booked by SDR - Count","KPI Card","Meetings Booked",kpi(fmt(booked)))}
+    ${report("Total Contacts Created","KPI Card","Contacts Count",kpi(fmt(s.contacts.length)),false,recordDetails("contacts",s.contacts,c=>[prop(c,"firstname"),prop(c,"lastname")].join(" ").trim()||prop(c,"email")||idOf(c),c=>ownerInfo(ownerId(c)).name))}
+    ${report("Total New Companies","KPI Card","Companies Count",kpi(fmt(s.companies.length)),false,recordDetails("companies",s.companies,c=>prop(c,"name")||idOf(c),c=>ownerInfo(ownerId(c)).name))}
+    ${report("Booked by SDR - Count","KPI Card","Meetings Booked",kpi(fmt(booked)),false,recordDetails("meetings",s.meetings,m=>prop(m,"hs_meeting_title")||idOf(m),m=>ownerInfo(ownerId(m)).name))}
   </div>
   <div class="report-grid">
     ${report("Calls Logged - BDR","Table","Calls per SDR",table(["Owner","Team","Calls"],ownerRowsFor(s.calls)),true)}
@@ -698,11 +786,11 @@ function renderSales(){
   const s=roleStats("sales");
   const prospectsConnected = new Set(s.connected.map(c=>ownerId(c)||idOf(c))).size;
   const html=`<div class="kpi-row">
-    ${report("Total Calls Logged","KPI Card","Total Calls",kpi(fmt(s.calls.length)))}
-    ${report("Total Connected Calls","KPI Card","Connected Calls",kpi(fmt(s.connected.length)))}
-    ${report("Prospects Connected","KPI Card","Connected Prospects",kpi(fmt(prospectsConnected)))}
+    ${report("Total Calls Logged","KPI Card","Total Calls",kpi(fmt(s.calls.length)),false,recordDetails("calls",s.calls,c=>prop(c,"hs_call_title")||idOf(c),c=>ownerInfo(ownerId(c)).name))}
+    ${report("Total Connected Calls","KPI Card","Connected Calls",kpi(fmt(s.connected.length)),false,recordDetails("calls",s.connected,c=>prop(c,"hs_call_title")||idOf(c),c=>ownerInfo(ownerId(c)).name))}
+    ${report("Prospects Connected","KPI Card","Connected Prospects",kpi(fmt(prospectsConnected)),false,recordDetails("calls",s.connected,c=>prop(c,"hs_call_title")||idOf(c),c=>ownerInfo(ownerId(c)).name))}
     ${report("Email Open Rate - Sales Total","KPI Card","Open %, Click %, Reply %",needsProperty("Need email analytics properties."))}
-    ${report("Prospecting Activity - Booked by Sales","KPI Card","Meetings Booked",kpi(fmt(s.meetings.length)))}
+    ${report("Prospecting Activity - Booked by Sales","KPI Card","Meetings Booked",kpi(fmt(s.meetings.length)),false,recordDetails("meetings",s.meetings,m=>prop(m,"hs_meeting_title")||idOf(m),m=>ownerInfo(ownerId(m)).name))}
   </div>
   <div class="report-grid">
     ${report("Calls Logged - Sales","Table","Calls per Sales Rep",table(["Owner","Team","Calls"],ownerRowsFor(s.calls)),true)}
@@ -729,10 +817,10 @@ function renderWon(){
   const cycles=won.map(d=>daysBetween(dateVal(d),prop(d,"closedate"))).filter(x=>x!==null);
   const avgCycle=cycles.length?Math.round(cycles.reduce((a,b)=>a+b,0)/cycles.length):0;
   const html=`<div class="kpi-row">
-    ${report("Deals Won","KPI Card","Won Deals Count",kpi(fmt(won.length)))}
-    ${report("Deals Won Amount","KPI Card","Revenue Amount",kpi(money(wonValue)))}
-    ${report("Average Deal Won Value","KPI Card","Average Won Deal Value",kpi(money(avg)))}
-    ${report("Deals Opened","KPI Card","Opened Deals Count",kpi(fmt(opened.length)))}
+    ${report("Deals Won","KPI Card","Won Deals Count",kpi(fmt(won.length)),false,recordDetails("deals",won,d=>prop(d,"dealname")||idOf(d),d=>money(amount(d))))}
+    ${report("Deals Won Amount","KPI Card","Revenue Amount",kpi(money(wonValue)),false,recordDetails("deals",won,d=>prop(d,"dealname")||idOf(d),d=>money(amount(d))))}
+    ${report("Average Deal Won Value","KPI Card","Average Won Deal Value",kpi(money(avg)),false,recordDetails("deals",won,d=>prop(d,"dealname")||idOf(d),d=>money(amount(d))))}
+    ${report("Deals Opened","KPI Card","Opened Deals Count",kpi(fmt(opened.length)),false,recordDetails("deals",opened,d=>prop(d,"dealname")||idOf(d),d=>ownerInfo(ownerId(d)).name))}
   </div>
   <div class="report-grid">
     ${report("Count of Deals Won During a Certain Period","Combo Chart","Deal Count + Revenue",`<canvas id="won-period"></canvas>`)}
@@ -788,9 +876,9 @@ function renderPipeline(){
   const rows=open.slice(0,LIMIT).map(d=>[`<strong>${hsLink("deals",d,prop(d,"dealname")||idOf(d))}</strong>`,money(amount(d)),ownerCell(ownerId(d)),teamTag(ownerId(d)),esc(prop(d,"pipeline")||"—"),esc(prop(d,"dealstage")||"—"),dateLabel(dateVal(d)),dateLabel(prop(d,"closedate")),hsOpen("deals",d)]);
   const lostRows=topEntries(countBy(lost,d=>prop(d,"closed_lost_reason")||"Unknown"),50).map(([r,c])=>[esc(r),fmt(c)]);
   const html=`<div class="kpi-row">
-    ${report("Count of Open Deals in Pipeline","KPI Card","Open Deals Count",kpi(fmt(open.length)))}
-    ${report("Amount of Open Deals in Pipeline","KPI Card","Pipeline Amount",kpi(money(openValue)))}
-    ${report("SUM of Open Deals in Pipeline by Weighted Amount","KPI Card","Weighted Pipeline Value",kpi(money(weighted)))}
+    ${report("Count of Open Deals in Pipeline","KPI Card","Open Deals Count",kpi(fmt(open.length)),false,recordDetails("deals",open,d=>prop(d,"dealname")||idOf(d),d=>money(amount(d))))}
+    ${report("Amount of Open Deals in Pipeline","KPI Card","Pipeline Amount",kpi(money(openValue)),false,recordDetails("deals",open,d=>prop(d,"dealname")||idOf(d),d=>money(amount(d))))}
+    ${report("SUM of Open Deals in Pipeline by Weighted Amount","KPI Card","Weighted Pipeline Value",kpi(money(weighted)),false,recordDetails("deals",open,d=>prop(d,"dealname")||idOf(d),d=>money(amount(d))))}
   </div>
   <div class="report-grid">
     ${report("Weighted Value of Renewal Pipeline","Column Chart","Weighted Renewal Value",`<canvas id="pl-weighted"></canvas>`)}
@@ -830,3 +918,4 @@ loadData(false);
 </script>
 </body>
 </html>
+<!-- UX patched: clean see-more accordions, sortable clickable columns, HubSpot links, wider report cards. -->
