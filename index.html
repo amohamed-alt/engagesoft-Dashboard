@@ -55,7 +55,7 @@
     th{text-align:left;color:var(--muted);font-size:10.5px;font-weight:800;padding:9px 12px;border-bottom:2px solid var(--line);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;background:#f8fafc;position:sticky;top:0;z-index:1}
     td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;white-space:nowrap;vertical-align:middle}tr:hover td{background:#f8fbff}
     .owner-cell{display:flex;align-items:center;gap:8px}.avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#dbeafe,#bfdbfe);color:#1d4ed8;display:grid;place-items:center;font:800 10px "IBM Plex Mono";flex-shrink:0}
-    .uid{font:700 11px "IBM Plex Mono";color:var(--muted);background:#f1f5f9;border-radius:4px;padding:2px 6px}
+    .uid{font:700 11px "IBM Plex Mono";color:var(--muted);background:#f1f5f9;border-radius:4px;padding:2px 6px}.hs-link{color:var(--primary);font-weight:800;text-decoration:none}.hs-link:hover{text-decoration:underline}.hs-open{font-size:10.5px;font-weight:800;color:var(--primary);text-decoration:none;background:var(--primary-soft);padding:3px 7px;border-radius:6px}.hs-open:hover{text-decoration:underline}
     .status,.team-tag{display:inline-flex;align-items:center;border-radius:5px;padding:3px 8px;font-size:11px;font-weight:800;gap:4px;white-space:nowrap}
     .status.green,.team-sales{background:var(--green-soft);color:#065f46}.status.orange,.team-gcc{background:var(--orange-soft);color:#78350f}.status.red{background:var(--red-soft);color:#7f1d1d}.status.blue,.team-egypt{background:var(--primary-soft);color:#1e3a8a}.status.purple,.team-bdr{background:var(--purple-soft);color:#4c1d95}.status.gray,.team-other{background:var(--gray-soft);color:#334155}.team-sa{background:#fce7f3;color:#9d174d}
     .empty{padding:30px;text-align:center;color:var(--muted);background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;line-height:1.5}.loader{width:16px;height:16px;border:2px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;display:inline-block;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:7px}@keyframes spin{to{transform:rotate(360deg)}}canvas{max-height:290px}
@@ -292,6 +292,48 @@ const safeDate = v => { const d = new Date(clean(v)); return Number.isNaN(d.getT
 const dateLabel = v => { const d = safeDate(v); return d ? d.toLocaleDateString("en-GB",{year:"numeric",month:"short",day:"2-digit"}) : "—"; };
 const monthKey = v => { const d = safeDate(v); return d ? `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}` : "Unknown"; };
 const amount = r => Number(prop(r,"amount_in_home_currency") || prop(r,"amount") || 0) || 0;
+const HUBSPOT_PORTAL_ID = "145742477";
+const HUBSPOT_BASE = "https://app-eu1.hubspot.com";
+
+function hubspotUrl(type, id){
+  const cleanId = clean(id);
+  if (!cleanId) return "#";
+  const map = {
+    contacts:"contacts",
+    companies:"companies",
+    deals:"deals",
+    leads:"leads",
+    calls:"calls",
+    meetings:"meetings"
+  };
+  const objectPath = map[type] || type;
+  return `${HUBSPOT_BASE}/contacts/${HUBSPOT_PORTAL_ID}/record/0-1/${cleanId}`.replace("/record/0-1/", `/record/${objectTypeCode(type)}/`);
+}
+
+function objectTypeCode(type){
+  return {
+    contacts:"0-1",
+    companies:"0-2",
+    deals:"0-3",
+    tickets:"0-5",
+    calls:"0-48",
+    meetings:"0-47",
+    leads:"0-136"
+  }[type] || "0-1";
+}
+
+function hsLink(type, record, label=null){
+  const id = typeof record === "object" ? idOf(record) : clean(record);
+  const text = label || id || "Open";
+  if (!id) return esc(text);
+  return `<a class="hs-link" href="${hubspotUrl(type,id)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`;
+}
+
+function hsOpen(type, record){
+  const id = typeof record === "object" ? idOf(record) : clean(record);
+  if (!id) return "";
+  return `<a class="hs-open" href="${hubspotUrl(type,id)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Open in HubSpot</a>`;
+}
 const isClosed = d => String(prop(d,"hs_is_closed")).toLowerCase() === "true";
 const isWon = d => String(prop(d,"hs_is_closed_won")).toLowerCase() === "true";
 const isConnectedCall = c => /connect|connected|answered|completed/i.test([prop(c,"hs_call_disposition"), prop(c,"hs_call_status")].join(" "));
@@ -553,7 +595,7 @@ function renderContacts(){
   const region=countBy(contacts,c=>prop(c,"country")||"Unknown");
   const life=countBy(contacts,c=>prop(c,"lifecyclestage")||"Unknown");
   const byOwner=countBy(contacts,c=>ownerInfo(ownerId(c)).name);
-  const rows=contacts.slice(0,LIMIT).map(c=>[`<strong>${esc([prop(c,"firstname"),prop(c,"lastname")].join(" ").trim()||prop(c,"email")||idOf(c))}</strong>`,esc(prop(c,"email")||"—"),esc(prop(c,"company")||"—"),ownerCell(ownerId(c)),esc(prop(c,"lifecyclestage")||"—"),esc(prop(c,"country")||"—"),esc(prop(c,"num_associated_deals")||"0"),dateLabel(dateVal(c)),`<span class="uid">${esc(idOf(c))}</span>`]);
+  const rows=contacts.slice(0,LIMIT).map(c=>[`<strong>${hsLink("contacts",c,[prop(c,"firstname"),prop(c,"lastname")].join(" ").trim()||prop(c,"email")||idOf(c))}</strong>`,esc(prop(c,"email")||"—"),esc(prop(c,"company")||"—"),ownerCell(ownerId(c)),esc(prop(c,"lifecyclestage")||"—"),esc(prop(c,"country")||"—"),esc(prop(c,"num_associated_deals")||"0"),dateLabel(dateVal(c)),hsOpen("contacts",c)]);
   const ownerRows=topEntries(byOwner,50).map(([o,c])=>[esc(o),fmt(c),"—","—"]);
   const html = `
     <div class="kpi-row">
@@ -743,7 +785,7 @@ function renderPipeline(){
   const weighted=open.reduce((s,d)=>s+(amount(d)*(Number(prop(d,"hs_deal_stage_probability")||0)/100)),0);
   const recent=open.filter(d=>inDateRange(d,{date:"30d"}));
   const stuck=open.filter(d=>{ const created=safeDate(dateVal(d)); return created && created < new Date(Date.now()-14*86400000); });
-  const rows=open.slice(0,LIMIT).map(d=>[`<strong>${esc(prop(d,"dealname")||idOf(d))}</strong>`,money(amount(d)),ownerCell(ownerId(d)),teamTag(ownerId(d)),esc(prop(d,"pipeline")||"—"),esc(prop(d,"dealstage")||"—"),dateLabel(dateVal(d)),dateLabel(prop(d,"closedate")),`<span class="uid">${esc(idOf(d))}</span>`]);
+  const rows=open.slice(0,LIMIT).map(d=>[`<strong>${hsLink("deals",d,prop(d,"dealname")||idOf(d))}</strong>`,money(amount(d)),ownerCell(ownerId(d)),teamTag(ownerId(d)),esc(prop(d,"pipeline")||"—"),esc(prop(d,"dealstage")||"—"),dateLabel(dateVal(d)),dateLabel(prop(d,"closedate")),hsOpen("deals",d)]);
   const lostRows=topEntries(countBy(lost,d=>prop(d,"closed_lost_reason")||"Unknown"),50).map(([r,c])=>[esc(r),fmt(c)]);
   const html=`<div class="kpi-row">
     ${report("Count of Open Deals in Pipeline","KPI Card","Open Deals Count",kpi(fmt(open.length)))}
