@@ -95,6 +95,13 @@
     .hs-open{font-size:10.5px;font-weight:800;color:var(--primary);text-decoration:none;background:var(--primary-soft);padding:3px 7px;border-radius:6px}
     .hs-open:hover{text-decoration:underline}
 
+
+    .click-hint{display:none!important}
+    .report.has-details .kpi-value,.report.has-details canvas,.report.has-details .report-title{cursor:pointer}
+    .report.has-details .kpi-value:hover{color:var(--primary)}
+    .report.wide{grid-column:1/-1}
+    .report-grid .report:has(.table-wrap){grid-column:1/-1}
+
     @media(max-width:1200px){.report-grid,.report-grid.three,.kpi-row{grid-template-columns:repeat(2,1fr)}}@media(max-width:860px){:root{--sidebar-w:0}.sidebar{display:none}.main{margin-left:0}.report-grid,.report-grid.three,.kpi-row{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.content{padding:18px 14px 36px}}
   </style>
 </head>
@@ -313,6 +320,70 @@ const updatedVal = r => clean(prop(r,"lastmodifieddate") || prop(r,"hs_lastmodif
 const safeDate = v => { const d = new Date(clean(v)); return Number.isNaN(d.getTime()) ? null : d; };
 const dateLabel = v => { const d = safeDate(v); return d ? d.toLocaleDateString("en-GB",{year:"numeric",month:"short",day:"2-digit"}) : "—"; };
 const monthKey = v => { const d = safeDate(v); return d ? `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,"0")}` : "Unknown"; };
+
+const STAGE_LABELS = {
+  // Deal stages - Sales Pipeline
+  qualifiedtobuy: "Demo / Meeting Completed",
+  contractsent: "Proposal Sent",
+  presentationscheduled: "Pilot/Demo Access",
+  decisionmakerboughtin: "Serious Consideration",
+  "3214296258": "Negotiation/Review",
+  "3214296282": "Approved",
+  closedwon: "Closed Won",
+  closedlost: "Closed Lost",
+
+  // Lead pipeline stages
+  "new-stage-id": "New",
+  "attempting-stage-id": "Ready to Book",
+  "connected-stage-id": "Meeting Booked",
+  "qualified-stage-id": "Qualified (By Sales)",
+  "unqualified-stage-id": "Disqualified",
+
+  // Lifecycle stage
+  subscriber: "Prospect",
+  "3517652159": "Subscriber",
+  lead: "Lead",
+  marketingqualifiedlead: "Marketing Qualified Lead",
+  salesqualifiedlead: "Sales Qualified Lead",
+  opportunity: "Opportunity",
+  customer: "Customer",
+
+  // Common fallback values
+  appointmentscheduled: "Appointment Scheduled",
+  presentation: "Presentation",
+  decisionmaker: "Decision Maker Bought In",
+  contractsent: "Proposal Sent",
+  closed_won: "Closed Won",
+  closed_lost: "Closed Lost"
+};
+
+function labelFor(value){
+  const raw = clean(value);
+  if (!raw) return "Unknown";
+  return STAGE_LABELS[raw] || STAGE_LABELS[raw.toLowerCase()] || raw;
+}
+
+function stageLabel(record){
+  return labelFor(prop(record,"lifecyclestage") || prop(record,"dealstage") || prop(record,"hs_pipeline_stage") || "Unknown");
+}
+
+function sourceLabel(value){
+  const raw = clean(value);
+  const map = {
+    OFFLINE: "Offline Sources",
+    ONLINE: "Online Sources",
+    DIRECT_TRAFFIC: "Direct Traffic",
+    ORGANIC_SEARCH: "Organic Search",
+    PAID_SEARCH: "Paid Search",
+    PAID_SOCIAL: "Paid Social",
+    SOCIAL_MEDIA: "Social Media",
+    EMAIL_MARKETING: "Email Marketing",
+    REFERRALS: "Referrals",
+    OTHER_CAMPAIGNS: "Other Campaigns"
+  };
+  return map[raw] || map[raw.toUpperCase()] || raw || "Unknown";
+}
+
 const amount = r => Number(prop(r,"amount_in_home_currency") || prop(r,"amount") || 0) || 0;
 const HUBSPOT_PORTAL_ID = "145742477";
 const HUBSPOT_BASE = "https://app-eu1.hubspot.com";
@@ -537,9 +608,6 @@ function report(title, shape, metric, inner, wide=false, details=[]){
   const id = `details-${Math.random().toString(36).slice(2)}`;
   const hasDetails = Array.isArray(details) && details.length > 0;
   const detailsHtml = hasDetails ? `
-    <div class="report-actions">
-      <button class="see-more-btn" onclick="event.stopPropagation(); toggleDetails('${id}', this)">See more</button>
-    </div>
     <div class="details-list" id="${id}">
       <div class="mini-list">
         ${details.slice(0,10).map(item => `<div class="mini-item"><strong>${item.htmlTitle || esc(item.title || item.name || item.label || 'Record')}</strong><span>${esc(item.meta || item.value || item.note || '')}</span></div>`).join("")}
@@ -548,7 +616,7 @@ function report(title, shape, metric, inner, wide=false, details=[]){
       ${details.length > 10 ? `<div class="report-actions"><button class="see-more-btn" onclick="event.stopPropagation(); toggleRows('${id}', this)">See more</button></div>` : ""}
     </div>` : "";
 
-  return `<div class="report ${wide?'wide':''}" ${hasDetails ? `onclick="toggleDetails('${id}')"` : ""}>
+  return `<div class="report ${wide?'wide':''} ${hasDetails?'has-details':''}" ${hasDetails ? `onclick="toggleDetails('${id}')"` : ""}>
     <div class="report-header"><div><div class="report-title">${esc(title)}</div><div class="report-sub">${esc(metric)}</div></div><span class="shape ${shape.includes('KPI')?'kpi':shape.includes('Table')?'table':''}">${esc(shape)}</span></div>
     ${inner}
     ${detailsHtml}
@@ -679,11 +747,11 @@ function renderContacts(){
   const online=contacts.filter(c=>/online|website|web|paid|organic|linkedin|google|social|direct/i.test([prop(c,"hs_analytics_source"),prop(c,"lead_source"),prop(c,"original_source")].join(" ")));
   const offline=contacts.filter(c=>!online.includes(c));
   const byMonth=countBy(contacts,c=>monthKey(dateVal(c)));
-  const source=countBy(contacts,c=>prop(c,"hs_analytics_source")||prop(c,"lead_source")||prop(c,"original_source")||"Unknown");
+  const source=countBy(contacts,c=>prop(c,"hs_analytics_source")||sourceLabel(prop(c,"lead_source")||prop(c,"original_source")||"Unknown"));
   const region=countBy(contacts,c=>prop(c,"country")||"Unknown");
-  const life=countBy(contacts,c=>prop(c,"lifecyclestage")||"Unknown");
+  const life=countBy(contacts,c=>labelFor(prop(c,"lifecyclestage")||"Unknown");
   const byOwner=countBy(contacts,c=>ownerInfo(ownerId(c)).name);
-  const rows=contacts.slice(0,LIMIT).map(c=>[`<strong>${hsLink("contacts",c,[prop(c,"firstname"),prop(c,"lastname")].join(" ").trim()||prop(c,"email")||idOf(c))}</strong>`,esc(prop(c,"email")||"—"),esc(prop(c,"company")||"—"),ownerCell(ownerId(c)),esc(prop(c,"lifecyclestage")||"—"),esc(prop(c,"country")||"—"),esc(prop(c,"num_associated_deals")||"0"),dateLabel(dateVal(c)),hsOpen("contacts",c)]);
+  const rows=contacts.slice(0,LIMIT).map(c=>[`<strong>${hsLink("contacts",c,[prop(c,"firstname"),prop(c,"lastname")].join(" ").trim()||prop(c,"email")||idOf(c))}</strong>`,esc(prop(c,"email")||"—"),esc(prop(c,"company")||"—"),ownerCell(ownerId(c)),esc(labelFor(prop(c,"lifecyclestage")||"—")),esc(prop(c,"country")||"—"),esc(prop(c,"num_associated_deals")||"0"),dateLabel(dateVal(c)),hsOpen("contacts",c)]);
   const ownerRows=topEntries(byOwner,50).map(([o,c])=>[esc(o),fmt(c),"—","—"]);
   const html = `
     <div class="kpi-row">
@@ -707,7 +775,7 @@ function renderContacts(){
   makeChart("ct-month-open","bar",...chartData(byMonth,12),"Contacts");
   makeChart("ct-online-month","bar",...chartData(countBy(online,c=>monthKey(dateVal(c))),12),"Online Contacts");
   makeChart("ct-won-month","bar",...chartData(countBy(won,d=>monthKey(prop(d,"closedate"))),12),"Won Deals");
-  makeChart("ct-offline","bar",...chartData(countBy(offline,c=>prop(c,"lead_source")||prop(c,"original_source")||"Unknown"),10),"Offline");
+  makeChart("ct-offline","bar",...chartData(countBy(offline,c=>sourceLabel(prop(c,"lead_source")||prop(c,"original_source")||"Unknown")),10),"Offline");
 }
 
 function renderFollowup(){
@@ -734,7 +802,7 @@ function renderFollowup(){
   makeChart("fu-owner","bar",...chartData(countBy(noFuture,d=>ownerInfo(ownerId(d)).name),10),"Deals");
   makeChart("fu-zero","doughnut",["Connected Available","Zero/Unknown"],[0,zeroConnected.length],"Deals");
   makeChart("fu-act30","bar",["Calls","Meetings","Emails","WhatsApp"],[last30Calls.length,last30Meetings.length,0,0],"Activities");
-  makeChart("fu-stage","bar",...chartData(countBy(open,d=>prop(d,"dealstage")||"Unknown"),10),"Deals in Stage");
+  makeChart("fu-stage","bar",...chartData(countBy(open,d=>labelFor(prop(d,"dealstage")||"Unknown"),10),"Deals in Stage");
 }
 
 function roleStats(role){
@@ -773,7 +841,7 @@ function renderBDR(){
     ${report("Meetings Booked by Users with BD","KPI / Column Chart","Meetings by BD Users",kpi(fmt(booked)))}
   </div>`;
   renderReportGrid("reports-bdr","bdr",html);
-  makeChart("bdr-contacts-source","barh",...chartData(countBy(s.contacts,c=>prop(c,"lead_source")||prop(c,"hs_analytics_source")||"Unknown"),10),"Contacts");
+  makeChart("bdr-contacts-source","barh",...chartData(countBy(s.contacts,c=>sourceLabel(prop(c,"lead_source")||prop(c,"hs_analytics_source")||"Unknown")),10),"Contacts");
   makeChart("bdr-companies-source","barh",...chartData(countBy(s.companies,c=>prop(c,"industry")||"Unknown"),10),"Companies");
   makeChart("bdr-booked-month","bar",...chartData(countBy(s.meetings,m=>monthKey(dateVal(m))),12),"Meetings");
   makeChart("bdr-meeting-outcome","doughnut",...chartData(countBy(s.meetings,m=>prop(m,"hs_meeting_outcome")||"Unknown"),10),"Meetings");
@@ -807,7 +875,7 @@ function renderSales(){
   makeChart("sales-booked","bar",...chartData(countBy(s.meetings,m=>ownerInfo(ownerId(m)).name),10),"Meetings");
   makeChart("sales-touched","bar",...chartData(countBy([...s.calls,...s.meetings],a=>ownerInfo(ownerId(a)).name),10),"Activities");
   makeChart("sales-activity","barh",["Calls","Emails","Meetings","WhatsApp"],[s.calls.length,0,s.meetings.length,0],"Activities");
-  makeChart("sales-contacts-source","barh",...chartData(countBy(s.contacts,c=>prop(c,"lead_source")||prop(c,"hs_analytics_source")||"Unknown"),10),"Contacts");
+  makeChart("sales-contacts-source","barh",...chartData(countBy(s.contacts,c=>sourceLabel(prop(c,"lead_source")||prop(c,"hs_analytics_source")||"Unknown")),10),"Contacts");
   makeChart("sales-companies-source","barh",...chartData(countBy(s.companies,c=>prop(c,"industry")||"Unknown"),10),"Companies");
 }
 
@@ -845,7 +913,7 @@ function renderLeads(){
   makeChart("lead-month","bar",...chartData(countBy(leads,l=>monthKey(dateVal(l))),12),"Leads");
   makeChart("lead-source","bar",...chartData(countBy(leads,l=>prop(l,"lead_source")||prop(l,"hs_analytics_source")||"Unknown"),10),"Leads");
   makeChart("lead-owner","bar",...chartData(countBy(leads,l=>ownerInfo(ownerId(l)).name),10),"Leads");
-  makeChart("lead-stage","bar",...chartData(countBy(leads,l=>prop(l,"hs_pipeline_stage")||"Unknown"),10),"Leads");
+  makeChart("lead-stage","bar",...chartData(countBy(leads,l=>labelFor(prop(l,"hs_pipeline_stage")||"Unknown"),10),"Leads");
 }
 
 function renderTAM(){
@@ -873,7 +941,7 @@ function renderPipeline(){
   const weighted=open.reduce((s,d)=>s+(amount(d)*(Number(prop(d,"hs_deal_stage_probability")||0)/100)),0);
   const recent=open.filter(d=>inDateRange(d,{date:"30d"}));
   const stuck=open.filter(d=>{ const created=safeDate(dateVal(d)); return created && created < new Date(Date.now()-14*86400000); });
-  const rows=open.slice(0,LIMIT).map(d=>[`<strong>${hsLink("deals",d,prop(d,"dealname")||idOf(d))}</strong>`,money(amount(d)),ownerCell(ownerId(d)),teamTag(ownerId(d)),esc(prop(d,"pipeline")||"—"),esc(prop(d,"dealstage")||"—"),dateLabel(dateVal(d)),dateLabel(prop(d,"closedate")),hsOpen("deals",d)]);
+  const rows=open.slice(0,LIMIT).map(d=>[`<strong>${hsLink("deals",d,prop(d,"dealname")||idOf(d))}</strong>`,money(amount(d)),ownerCell(ownerId(d)),teamTag(ownerId(d)),esc(prop(d,"pipeline")||"—"),esc(labelFor(prop(d,"dealstage")||"—")),dateLabel(dateVal(d)),dateLabel(prop(d,"closedate")),hsOpen("deals",d)]);
   const lostRows=topEntries(countBy(lost,d=>prop(d,"closed_lost_reason")||"Unknown"),50).map(([r,c])=>[esc(r),fmt(c)]);
   const html=`<div class="kpi-row">
     ${report("Count of Open Deals in Pipeline","KPI Card","Open Deals Count",kpi(fmt(open.length)),false,recordDetails("deals",open,d=>prop(d,"dealname")||idOf(d),d=>money(amount(d))))}
@@ -899,10 +967,10 @@ function renderPipeline(){
   makeChart("pl-team","bar",...chartData(countBy(open,d=>ownerInfo(ownerId(d)).team),10),"Deals");
   makeChart("pl-new30","bar",...chartData(sumBy(recent,d=>monthKey(dateVal(d))),10),"Value");
   makeChart("pl-weight-owner","bar",...chartData(sumBy(open,d=>ownerInfo(ownerId(d)).name),10),"Value");
-  makeChart("pl-stage","bar",...chartData(countBy(open,d=>prop(d,"dealstage")||"Unknown"),12),"Deals");
-  makeChart("pl-stuck","bar",...chartData(countBy(stuck,d=>prop(d,"dealstage")||"Unknown"),12),"Stuck");
+  makeChart("pl-stage","bar",...chartData(countBy(open,d=>labelFor(prop(d,"dealstage")||"Unknown"),12),"Deals");
+  makeChart("pl-stuck","bar",...chartData(countBy(stuck,d=>labelFor(prop(d,"dealstage")||"Unknown"),12),"Stuck");
   makeChart("pl-old-owner","bar",...chartData(countBy(open,d=>ownerInfo(ownerId(d)).name),10),"Deals");
-  makeChart("pl-lead-source","doughnut",...chartData(countBy(state.data.contacts,c=>prop(c,"lead_source")||prop(c,"original_source")||"Unknown"),10),"Sources");
+  makeChart("pl-lead-source","doughnut",...chartData(countBy(state.data.contacts,c=>sourceLabel(prop(c,"lead_source")||prop(c,"original_source")||"Unknown")),10),"Sources");
 }
 
 function exportCsv(){
