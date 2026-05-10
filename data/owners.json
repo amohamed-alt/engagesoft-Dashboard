@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-09T12:07:39.110Z",
+  "generatedAt": "2026-05-10T18:23:22.803Z",
   "source": "HubSpot Owners Full Daily Sync",
   "objectType": "owners",
   "totalRecords": 25,
@@ -154,7 +154,7 @@
         "userId": 30207524,
         "userIdIncludingInactive": 30207524,
         "createdAt": "2025-09-16T17:23:57.681Z",
-        "updatedAt": "2026-04-26T06:24:51.989Z",
+        "updatedAt": "2026-05-10T06:35:44.069Z",
         "archived": false,
         "teams": [
           {
@@ -195,7 +195,7 @@
         "userId": 30207740,
         "userIdIncludingInactive": 30207740,
         "createdAt": "2025-09-16T17:48:35.071Z",
-        "updatedAt": "2026-05-06T06:12:29.997Z",
+        "updatedAt": "2026-05-10T06:31:39.860Z",
         "archived": false,
         "teams": [
           {
@@ -318,7 +318,7 @@
         "userId": 30210123,
         "userIdIncludingInactive": 30210123,
         "createdAt": "2025-09-17T01:31:08.769Z",
-        "updatedAt": "2026-04-26T07:59:06.956Z",
+        "updatedAt": "2026-05-09T12:59:41.627Z",
         "archived": false,
         "teams": [
           {
@@ -482,7 +482,7 @@
         "userId": 30531777,
         "userIdIncludingInactive": 30531777,
         "createdAt": "2025-10-12T08:16:41.331Z",
-        "updatedAt": "2026-05-03T06:42:55.689Z",
+        "updatedAt": "2026-05-10T06:20:01.967Z",
         "archived": false,
         "teams": [
           {
@@ -564,7 +564,7 @@
         "userId": 30953784,
         "userIdIncludingInactive": 30953784,
         "createdAt": "2025-11-13T11:15:03.176Z",
-        "updatedAt": "2026-05-07T11:01:46.438Z",
+        "updatedAt": "2026-05-10T09:13:36.201Z",
         "archived": false,
         "teams": [
           {
@@ -672,7 +672,7 @@
         "userId": 31634046,
         "userIdIncludingInactive": 31634046,
         "createdAt": "2026-01-04T14:14:08.857Z",
-        "updatedAt": "2026-05-03T06:54:27.846Z",
+        "updatedAt": "2026-05-10T07:46:26.020Z",
         "archived": false,
         "teams": [
           {
@@ -927,8 +927,8 @@
     }
   ],
   "debug": {
-    "startedAt": "2026-05-09T12:07:38.790Z",
-    "finishedAt": "2026-05-09T12:07:39.110Z",
+    "startedAt": "2026-05-10T18:23:22.525Z",
+    "finishedAt": "2026-05-10T18:23:22.803Z",
     "lastAfter": null,
     "hasMore": false,
     "lastDebug": {
