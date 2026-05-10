@@ -429,7 +429,11 @@ function hsOpen(type, record){
 }
 const isClosed = d => String(prop(d,"hs_is_closed")).toLowerCase() === "true";
 const isWon = d => String(prop(d,"hs_is_closed_won")).toLowerCase() === "true";
-const isConnectedCall = c => /connect|connected|answered|completed/i.test([prop(c,"hs_call_disposition"), prop(c,"hs_call_status")].join(" "));
+const CONNECTED_CALL_DISPOSITION_ID = "f240bbac-87c9-4f6e-bf70-924b57d47db7";
+const isConnectedCall = c => {
+  const disposition = clean(prop(c,"hs_call_disposition"));
+  return disposition === CONNECTED_CALL_DISPOSITION_ID || /connect|connected|answered/i.test(disposition);
+};
 const isCompletedMeeting = m => /complete|completed|held/i.test(prop(m,"hs_meeting_outcome"));
 const hasNextActivity = d => !!clean(prop(d,"hs_next_activity_date"));
 const daysBetween = (a,b) => { const da=safeDate(a), db=safeDate(b); return da && db ? Math.max(0, Math.round((db-da)/86400000)) : null; };
@@ -726,7 +730,7 @@ function sortTable(th, columnIndex){
 function toggleRows(className, btn){
   const rows = document.querySelectorAll(`.${className}`);
   const isHidden = [...rows].some(r => r.style.display === "none");
-  rows.forEach(r => r.style.display = isHidden ? "table-row" : "none");
+  rows.forEach(r => r.style.display = isHidden ? "grid" : "none");
   if (btn) btn.textContent = isHidden ? "Show less" : "See more";
 }
 function renderReportGrid(containerId, page, html){ $(containerId).innerHTML = html; }
@@ -749,7 +753,7 @@ function renderContacts(){
   const byMonth=countBy(contacts,c=>monthKey(dateVal(c)));
   const source=countBy(contacts,c=>prop(c,"hs_analytics_source")||sourceLabel(prop(c,"lead_source")||prop(c,"original_source")||"Unknown"));
   const region=countBy(contacts,c=>prop(c,"country")||"Unknown");
-  const life=countBy(contacts,c=>labelFor(prop(c,"lifecyclestage")||"Unknown");
+  const life=countBy(contacts,c=>labelFor(prop(c,"lifecyclestage")||"Unknown"));
   const byOwner=countBy(contacts,c=>ownerInfo(ownerId(c)).name);
   const rows=contacts.slice(0,LIMIT).map(c=>[`<strong>${hsLink("contacts",c,[prop(c,"firstname"),prop(c,"lastname")].join(" ").trim()||prop(c,"email")||idOf(c))}</strong>`,esc(prop(c,"email")||"—"),esc(prop(c,"company")||"—"),ownerCell(ownerId(c)),esc(labelFor(prop(c,"lifecyclestage")||"—")),esc(prop(c,"country")||"—"),esc(prop(c,"num_associated_deals")||"0"),dateLabel(dateVal(c)),hsOpen("contacts",c)]);
   const ownerRows=topEntries(byOwner,50).map(([o,c])=>[esc(o),fmt(c),"—","—"]);
@@ -802,7 +806,7 @@ function renderFollowup(){
   makeChart("fu-owner","bar",...chartData(countBy(noFuture,d=>ownerInfo(ownerId(d)).name),10),"Deals");
   makeChart("fu-zero","doughnut",["Connected Available","Zero/Unknown"],[0,zeroConnected.length],"Deals");
   makeChart("fu-act30","bar",["Calls","Meetings","Emails","WhatsApp"],[last30Calls.length,last30Meetings.length,0,0],"Activities");
-  makeChart("fu-stage","bar",...chartData(countBy(open,d=>labelFor(prop(d,"dealstage")||"Unknown"),10),"Deals in Stage");
+  makeChart("fu-stage","bar",...chartData(countBy(open,d=>labelFor(prop(d,"dealstage")||"Unknown")),10),"Deals in Stage");
 }
 
 function roleStats(role){
@@ -913,7 +917,7 @@ function renderLeads(){
   makeChart("lead-month","bar",...chartData(countBy(leads,l=>monthKey(dateVal(l))),12),"Leads");
   makeChart("lead-source","bar",...chartData(countBy(leads,l=>prop(l,"lead_source")||prop(l,"hs_analytics_source")||"Unknown"),10),"Leads");
   makeChart("lead-owner","bar",...chartData(countBy(leads,l=>ownerInfo(ownerId(l)).name),10),"Leads");
-  makeChart("lead-stage","bar",...chartData(countBy(leads,l=>labelFor(prop(l,"hs_pipeline_stage")||"Unknown"),10),"Leads");
+  makeChart("lead-stage","bar",...chartData(countBy(leads,l=>labelFor(prop(l,"hs_pipeline_stage")||"Unknown")),10),"Leads");
 }
 
 function renderTAM(){
@@ -967,8 +971,8 @@ function renderPipeline(){
   makeChart("pl-team","bar",...chartData(countBy(open,d=>ownerInfo(ownerId(d)).team),10),"Deals");
   makeChart("pl-new30","bar",...chartData(sumBy(recent,d=>monthKey(dateVal(d))),10),"Value");
   makeChart("pl-weight-owner","bar",...chartData(sumBy(open,d=>ownerInfo(ownerId(d)).name),10),"Value");
-  makeChart("pl-stage","bar",...chartData(countBy(open,d=>labelFor(prop(d,"dealstage")||"Unknown"),12),"Deals");
-  makeChart("pl-stuck","bar",...chartData(countBy(stuck,d=>labelFor(prop(d,"dealstage")||"Unknown"),12),"Stuck");
+  makeChart("pl-stage","bar",...chartData(countBy(open,d=>labelFor(prop(d,"dealstage")||"Unknown")),12),"Deals");
+  makeChart("pl-stuck","bar",...chartData(countBy(stuck,d=>labelFor(prop(d,"dealstage")||"Unknown")),12),"Stuck");
   makeChart("pl-old-owner","bar",...chartData(countBy(open,d=>ownerInfo(ownerId(d)).name),10),"Deals");
   makeChart("pl-lead-source","doughnut",...chartData(countBy(state.data.contacts,c=>sourceLabel(prop(c,"lead_source")||prop(c,"original_source")||"Unknown")),10),"Sources");
 }
