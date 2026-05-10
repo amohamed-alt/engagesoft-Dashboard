@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-08T23:56:12.265Z",
+  "generatedAt": "2026-05-10T18:33:52.596Z",
   "source": "HubSpot Associations contacts to companies",
   "associationKey": "contact-company",
   "fromObjectType": "contacts",
@@ -8,7 +8,7 @@
   "records": [],
   "debug": {
     "sourceKey": "contacts",
-    "sourceCount": 18680,
+    "sourceCount": 19406,
     "warnings": [
       {
         "pairKey": "contact-company",
@@ -103,6 +103,11 @@
       {
         "pairKey": "contact-company",
         "batchIndex": 18,
+        "message": "Association batch request failed."
+      },
+      {
+        "pairKey": "contact-company",
+        "batchIndex": 19,
         "message": "Association batch request failed."
       }
     ]
